@@ -5,8 +5,6 @@ import {
   HelpCircle, Sparkles, Compass, Award, Anchor, Sun, Flame, Shield, BookOpen, Music, VolumeX
 } from 'lucide-react';
 import { useNavigationStore } from '../store/navigationStore';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { PresentationControls, Sparkles as SparklesDrei } from '@react-three/drei';
 
 // --- SANSKRIT DICTIONARY & MAP ---
 const LETTER_TO_SANSKRIT = {
@@ -38,421 +36,51 @@ const LETTER_TO_SANSKRIT = {
   Z: { char: "झ", name: "Jyoti (Light)" }
 };
 
-// --- PROCEDURAL 3D MESH SUBCOMPONENTS ---
-function IndusSealMesh() {
-  const groupRef = useRef();
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.25;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-    }
-  });
-  return (
-    <group ref={groupRef}>
-      {/* Terracotta seal base */}
-      <mesh>
-        <boxGeometry args={[1.1, 1.1, 0.2]} />
-        <meshStandardMaterial color="#a0522d" roughness={0.9} />
-      </mesh>
-      {/* Inset border */}
-      <mesh position={[0, 0, 0.11]}>
-        <boxGeometry args={[0.9, 0.9, 0.02]} />
-        <meshStandardMaterial color="#8b4513" roughness={0.8} />
-      </mesh>
-      {/* Priest-king crown outline representation */}
-      <mesh position={[0, 0.15, 0.125]}>
-        <coneGeometry args={[0.18, 0.25, 4]} />
-        <meshStandardMaterial color="#d2b48c" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, -0.15, 0.125]}>
-        <cylinderGeometry args={[0.15, 0.15, 0.2, 8]} />
-        <meshStandardMaterial color="#d2b48c" roughness={0.8} />
-      </mesh>
-      <SparklesDrei count={15} scale={1} size={2.5} color="#d9744b" />
-    </group>
-  );
-}
+// --- REUSABLE 3D PERSPECTIVE TILT WRAPPER ---
+const TiltCard = ({ children, className, style, onClick, whileHover, ...props }) => {
+  const cardRef = useRef(null);
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
 
-function VedicAltarMesh() {
-  const groupRef = useRef();
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
-    }
-  });
-  return (
-    <group ref={groupRef} position={[0, -0.4, 0]}>
-      {/* Tiered fire altar */}
-      <mesh position={[0, 0.1, 0]}>
-        <boxGeometry args={[1.5, 0.2, 1.5]} />
-        <meshStandardMaterial color="#3a2f28" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 0.3, 0]}>
-        <boxGeometry args={[1.1, 0.2, 1.1]} />
-        <meshStandardMaterial color="#4a3e35" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, 0.5, 0]}>
-        <boxGeometry args={[0.7, 0.2, 0.7]} />
-        <meshStandardMaterial color="#5a4d42" roughness={0.8} />
-      </mesh>
-      
-      {/* Floating fire particles */}
-      <SparklesDrei count={35} scale={0.7} size={4.5} speed={1.5} color="#ff9933" />
-      <pointLight position={[0, 0.7, 0]} color="#ff7700" intensity={2} distance={3} />
-    </group>
-  );
-}
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    // Mouse offset relative to center of the card
+    const mouseX = e.clientX - rect.left - width / 2;
+    const mouseY = e.clientY - rect.top - height / 2;
+    // Max 12 degrees of rotation
+    const rX = -(mouseY / height) * 12;
+    const rY = (mouseX / width) * 12;
+    setRotateX(rX);
+    setRotateY(rY);
+  };
 
-function MauryaColumnMesh() {
-  const wheelRef = useRef();
-  useFrame((state) => {
-    if (wheelRef.current) {
-      wheelRef.current.rotation.z = state.clock.elapsedTime * 0.3;
-    }
-  });
-  return (
-    <group position={[0, -0.3, 0]}>
-      {/* Column shaft */}
-      <mesh position={[0, -0.3, 0]}>
-        <cylinderGeometry args={[0.22, 0.22, 0.7, 16]} />
-        <meshStandardMaterial color="#e5b37a" roughness={0.6} />
-      </mesh>
-      {/* Inverted lotus base */}
-      <mesh position={[0, 0.15, 0]} rotation={[Math.PI, 0, 0]}>
-        <coneGeometry args={[0.3, 0.2, 16]} />
-        <meshStandardMaterial color="#d4a36a" roughness={0.7} />
-      </mesh>
-      {/* Ashoka Chakra Wheel */}
-      <mesh ref={wheelRef} position={[0, 0.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.38, 0.38, 0.08, 24]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.7} roughness={0.3} />
-      </mesh>
-      <SparklesDrei count={15} scale={0.8} size={3} color="#e5b37a" />
-    </group>
-  );
-}
-
-function GuptaAstrolabeMesh() {
-  const ring1 = useRef();
-  const ring2 = useRef();
-  const ring3 = useRef();
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    if (ring1.current) ring1.current.rotation.x = t * 0.45;
-    if (ring2.current) ring2.current.rotation.y = t * 0.35;
-    if (ring3.current) ring3.current.rotation.z = t * 0.55;
-  });
-  return (
-    <group>
-      <mesh ref={ring1}>
-        <torusGeometry args={[0.85, 0.035, 8, 48]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh ref={ring2}>
-        <torusGeometry args={[0.7, 0.035, 8, 48]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh ref={ring3}>
-        <torusGeometry args={[0.55, 0.035, 8, 48]} />
-        <meshStandardMaterial color="#c0c0c0" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color="#ffd700" emissive="#ffaa00" emissiveIntensity={0.6} />
-      </mesh>
-      <pointLight color="#ffd700" intensity={2} distance={2.5} />
-    </group>
-  );
-}
-
-function CholaNatarajaMesh() {
-  const ringRef = useRef();
-  useFrame((state) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.z = state.clock.elapsedTime * 0.2;
-    }
-  });
-  return (
-    <group>
-      <group ref={ringRef}>
-        <mesh>
-          <torusGeometry args={[0.8, 0.05, 8, 64]} />
-          <meshStandardMaterial color="#cd7f32" metalness={0.8} roughness={0.25} />
-        </mesh>
-        {[...Array(12)].map((_, i) => {
-          const angle = (i * 30 * Math.PI) / 180;
-          const x = 0.8 * Math.sin(angle);
-          const y = 0.8 * Math.cos(angle);
-          return (
-            <mesh key={i} position={[x, y, 0]} rotation={[0, 0, -angle]}>
-              <coneGeometry args={[0.06, 0.15, 4]} />
-              <meshStandardMaterial color="#ff5500" emissive="#ff1100" emissiveIntensity={0.7} />
-            </mesh>
-          );
-        })}
-      </group>
-      {/* Statuesque pillar silhouette in core */}
-      <mesh position={[0, -0.1, 0]}>
-        <cylinderGeometry args={[0.07, 0.07, 0.6, 8]} />
-        <meshStandardMaterial color="#cd7f32" metalness={0.7} roughness={0.3} />
-      </mesh>
-      <mesh position={[0, 0.22, 0]}>
-        <sphereGeometry args={[0.07, 12, 12]} />
-        <meshStandardMaterial color="#cd7f32" metalness={0.7} roughness={0.3} />
-      </mesh>
-      <SparklesDrei count={20} scale={0.9} size={3} color="#cd7f32" />
-    </group>
-  );
-}
-
-function HinduGopuramMesh() {
-  const groupRef = useRef();
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
-    }
-  });
-  return (
-    <group ref={groupRef} position={[0, -0.4, 0]}>
-      {/* Granite layers */}
-      <mesh position={[0, 0.1, 0]}>
-        <boxGeometry args={[1.2, 0.18, 1.2]} />
-        <meshStandardMaterial color="#b25316" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, 0.28, 0]}>
-        <boxGeometry args={[0.9, 0.18, 0.9]} />
-        <meshStandardMaterial color="#b25316" roughness={0.85} />
-      </mesh>
-      <mesh position={[0, 0.46, 0]}>
-        <boxGeometry args={[0.6, 0.18, 0.6]} />
-        <meshStandardMaterial color="#b25316" roughness={0.85} />
-      </mesh>
-      {/* Golden spire */}
-      <mesh position={[0, 0.65, 0]}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <mesh position={[0, 0.8, 0]}>
-        <coneGeometry args={[0.06, 0.2, 8]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
-      </mesh>
-      <pointLight position={[0, 0.65, 0]} color="#f97316" intensity={2} distance={3} />
-    </group>
-  );
-}
-
-function MughalDomeMesh() {
-  const groupRef = useRef();
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.12;
-    }
-  });
-  return (
-    <group ref={groupRef} position={[0, -0.3, 0]}>
-      {/* Plinth */}
-      <mesh position={[0, 0.05, 0]}>
-        <cylinderGeometry args={[0.75, 0.75, 0.12, 8]} />
-        <meshStandardMaterial color="#fffaf0" roughness={0.4} />
-      </mesh>
-      {/* Main Dome shape */}
-      <mesh position={[0, 0.4, 0]}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-        <meshStandardMaterial color="#fffaf0" roughness={0.25} />
-      </mesh>
-      {/* Top spire */}
-      <mesh position={[0, 0.92, 0]}>
-        <coneGeometry args={[0.045, 0.25, 8]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.8} />
-      </mesh>
-      {/* Symmetrical Emerald wireframe overlay */}
-      <mesh position={[0, 0.4, 0]}>
-        <sphereGeometry args={[0.52, 12, 12]} />
-        <meshBasicMaterial color="#10b981" wireframe />
-      </mesh>
-      <pointLight position={[0, 0.4, 0]} color="#10b981" intensity={2} distance={2.5} />
-    </group>
-  );
-}
-
-function MarathaFortMesh() {
-  const flagRef = useRef();
-  useFrame((state) => {
-    if (flagRef.current) {
-      flagRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 5) * 0.15;
-    }
-  });
-  return (
-    <group position={[0, -0.4, 0]}>
-      {/* Impregnable basalt hill */}
-      <mesh>
-        <coneGeometry args={[0.85, 0.75, 5]} />
-        <meshStandardMaterial color="#2d2d2d" roughness={0.9} />
-      </mesh>
-      {/* Flag post */}
-      <mesh position={[0.15, 0.65, 0]}>
-        <cylinderGeometry args={[0.012, 0.012, 0.9, 8]} />
-        <meshStandardMaterial color="#8b4513" roughness={0.6} />
-      </mesh>
-      {/* Bhagwa Saffron Flag */}
-      <mesh ref={flagRef} position={[0.3, 0.9, 0]}>
-        <boxGeometry args={[0.3, 0.15, 0.01]} />
-        <meshStandardMaterial color="#f43f5e" roughness={0.8} />
-      </mesh>
-      <SparklesDrei count={15} scale={0.85} size={3} color="#f43f5e" />
-    </group>
-  );
-}
-
-function BattlesClashMesh() {
-  const sword1 = useRef();
-  const sword2 = useRef();
-  useFrame((state) => {
-    const angle = Math.sin(state.clock.elapsedTime * 6) * 0.15;
-    if (sword1.current) sword1.current.rotation.z = -Math.PI / 4 + angle;
-    if (sword2.current) sword2.current.rotation.z = Math.PI / 4 - angle;
-  });
-  return (
-    <group>
-      {/* Rajput Talwar */}
-      <group ref={sword1} position={[-0.25, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
-        <mesh position={[0, 0.35, 0]}>
-          <boxGeometry args={[0.035, 0.8, 0.015]} />
-          <meshStandardMaterial color="#b0b0b0" metalness={0.9} roughness={0.2} />
-        </mesh>
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[0.18, 0.035, 0.035]} />
-          <meshStandardMaterial color="#ffd700" metalness={0.8} />
-        </mesh>
-      </group>
-
-      {/* Mughal Khanda */}
-      <group ref={sword2} position={[0.25, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
-        <mesh position={[0, 0.35, 0]}>
-          <boxGeometry args={[0.035, 0.8, 0.015]} />
-          <meshStandardMaterial color="#b0b0b0" metalness={0.9} roughness={0.2} />
-        </mesh>
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[0.18, 0.035, 0.035]} />
-          <meshStandardMaterial color="#ffd700" metalness={0.8} />
-        </mesh>
-      </group>
-
-      {/* Clashing Sparks */}
-      <SparklesDrei count={35} scale={0.35} size={5.5} speed={2} color="#ffd700" />
-      <pointLight position={[0, 0, 0]} color="#ffd700" intensity={2.5} distance={2.5} />
-    </group>
-  );
-}
-
-function ScriptoriumScrollMesh() {
-  const scrollRef = useRef();
-  useFrame((state) => {
-    if (scrollRef.current) {
-      scrollRef.current.rotation.y = state.clock.elapsedTime * 0.2;
-      scrollRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.07;
-    }
-  });
-  return (
-    <group ref={scrollRef}>
-      {/* Scroll core */}
-      <mesh>
-        <cylinderGeometry args={[0.16, 0.16, 1.1, 16]} />
-        <meshStandardMaterial color="#f4ebd0" roughness={0.85} />
-      </mesh>
-      {/* Wooden scroll knobs */}
-      <mesh position={[0, 0.58, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.12, 8]} />
-        <meshStandardMaterial color="#5c2e0b" roughness={0.6} />
-      </mesh>
-      <mesh position={[0, -0.58, 0]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.12, 8]} />
-        <meshStandardMaterial color="#5c2e0b" roughness={0.6} />
-      </mesh>
-      <SparklesDrei count={25} scale={0.9} size={3} color="#8a1a1a" />
-    </group>
-  );
-}
-
-function ArtifactStage({ activeEra }) {
-  switch (activeEra) {
-    case 'indus': return <IndusSealMesh />;
-    case 'vedic': return <VedicAltarMesh />;
-    case 'maurya': return <MauryaColumnMesh />;
-    case 'gupta': return <GuptaAstrolabeMesh />;
-    case 'chola': return <CholaNatarajaMesh />;
-    case 'hindu': return <HinduGopuramMesh />;
-    case 'mughal': return <MughalDomeMesh />;
-    case 'maratha': return <MarathaFortMesh />;
-    case 'battles': return <BattlesClashMesh />;
-    case 'scribe': return <ScriptoriumScrollMesh />;
-    default: return null;
-  }
-}
-
-const Indian3DArtifactViewer = ({ activeEra }) => {
-  const [hasWebGL, setHasWebGL] = useState(true);
-
-  useEffect(() => {
-    try {
-      const canvas = document.createElement('canvas');
-      const isSupported = !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-      setHasWebGL(isSupported);
-    } catch (e) {
-      setHasWebGL(false);
-    }
-  }, []);
-
-  if (!hasWebGL) {
-    return (
-      <div className="w-full h-full relative bg-black/60 flex items-center justify-center">
-        <img 
-          src={
-            activeEra === 'indus' 
-              ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-              : activeEra === 'vedic'
-                ? "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop"
-                : activeEra === 'maurya'
-                  ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                  : activeEra === 'gupta'
-                    ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop"
-                    : activeEra === 'chola'
-                      ? "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=800&auto=format&fit=crop"
-                      : activeEra === 'hindu'
-                        ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-                        : activeEra === 'mughal'
-                          ? "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"
-                          : activeEra === 'maratha'
-                            ? "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=800&auto=format&fit=crop"
-                            : "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-          } 
-          alt="Historical Artifact fallback" 
-          className="w-full h-full object-cover opacity-70"
-        />
-      </div>
-    );
-  }
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+  };
 
   return (
-    <div className="w-full h-full relative bg-black/45">
-      <Canvas camera={{ position: [0, 0, 2.3], fof: 50 }}>
-        <ambientLight intensity={0.4} />
-        <pointLight position={[5, 5, 5]} intensity={1.5} />
-        <directionalLight position={[-3, 5, 2]} intensity={1} />
-        <PresentationControls 
-          global 
-          zoom={1.0} 
-          polar={[-Math.PI / 3, Math.PI / 3]} 
-          azimuth={[-Math.PI / 2, Math.PI / 2]} 
-          config={{ mass: 2, tension: 350, friction: 40 }}
-        >
-          <ArtifactStage activeEra={activeEra} />
-        </PresentationControls>
-      </Canvas>
-      <div className="absolute top-3 right-3 text-[7px] font-mono tracking-widest text-[#ff9933]/50 pointer-events-none uppercase">
-        🖱️ Drag to rotate 3D artifact
-      </div>
-    </div>
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+      onClick={onClick}
+      style={{
+        ...style,
+        transformStyle: "preserve-3d",
+        perspective: 1000,
+        rotateX: rotateX,
+        rotateY: rotateY
+      }}
+      whileHover={whileHover}
+      {...props}
+    >
+      {children}
+    </motion.div>
   );
 };
 
@@ -954,7 +582,7 @@ export default function IndianCollection() {
     };
   }, []);
 
-  // Epoch translation listener
+  // Monitor Era shifts for transitions
   useEffect(() => {
     if (prevEraRef.current !== activeEra) {
       setIsTransitioning(true);
@@ -1389,26 +1017,63 @@ export default function IndianCollection() {
                 </p>
               </div>
 
-              {/* INTERACTIVE 3D ARTIFACT VIEWPORT archway frame */}
-              <div 
-                className="lg:col-span-5 h-56 md:h-64 w-full overflow-hidden temple-arch-mask border relative shadow-[0_20px_50px_rgba(0,0,0,0.95)] group transition-all duration-500 bg-black/30"
-                style={{ borderColor: `${currentTheme.accent}45` }}
+              {/* 3D PERSPECTIVE TILT Banner Frame (Launches Multimedia Modal) */}
+              <TiltCard 
+                onClick={() => setActiveExhibit(activeEra)}
+                className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden temple-arch-mask border relative shadow-[0_15px_40px_rgba(0,0,0,0.85)] group cursor-pointer transition-all duration-500"
+                style={{ borderColor: `${currentTheme.accent}40` }}
               >
-                {/* 3D Viewer */}
-                <Indian3DArtifactViewer activeEra={activeEra} />
-
-                {/* Corner floating button for gallery trigger */}
-                <button
-                  onClick={() => setActiveExhibit(activeEra)}
-                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border bg-black/85 hover:bg-[#ff9933] hover:text-black hover:border-white transition-all cursor-pointer shadow-lg z-30"
+                <div className="absolute inset-0 transition-all duration-500 group-hover:scale-105" style={{ backgroundColor: currentTheme.glow }} />
+                <img 
+                  src={
+                    activeEra === 'indus' 
+                      ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
+                      : activeEra === 'vedic'
+                        ? "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop"
+                        : activeEra === 'maurya'
+                          ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
+                          : activeEra === 'gupta'
+                            ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop"
+                            : activeEra === 'chola'
+                              ? "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=800&auto=format&fit=crop"
+                              : activeEra === 'hindu'
+                                ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
+                                : activeEra === 'mughal'
+                                  ? "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"
+                                  : activeEra === 'maratha'
+                                    ? "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=800&auto=format&fit=crop"
+                                    : activeEra === 'battles'
+                                      ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
+                                      : "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
+                  } 
+                  alt="Era Banner" 
+                  className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.05] transition-all duration-700 group-hover:scale-105"
+                  style={{ transform: "translateZ(20px)" }}
+                />
+                
+                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-transparent to-black/30" />
+                <div 
+                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border"
                   style={{ 
+                    backgroundColor: '#0c0a09', 
                     borderColor: `${currentTheme.accent}40`,
-                    color: currentTheme.accent
+                    color: currentTheme.accent,
+                    transform: "translateZ(30px)"
                   }}
                 >
-                  🎬 Exhibit Gallery &amp; Video
-                </button>
-              </div>
+                  Multimedia Exhibit
+                </div>
+                
+                <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <span 
+                    className="px-5 py-2.5 text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-xl flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+                    style={{ backgroundColor: currentTheme.accent, transform: "translateZ(40px)" }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    Enter Exhibit Gallery
+                  </span>
+                </div>
+              </TiltCard>
             </motion.div>
           </AnimatePresence>
 
@@ -1481,7 +1146,7 @@ export default function IndianCollection() {
                   </div>
                 </motion.div>
               ) : (
-                /* Dynamic Custom Cards grid */
+                /* Dynamic Custom Cards grid with 3D Parallax Hover */
                 <motion.div
                   key={activeEra}
                   initial="hidden"
@@ -1546,7 +1211,7 @@ export default function IndianCollection() {
 // --- SUB-COMPONENT: ROOM I CARD (Harappan Terracotta Clay) ---
 const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, y: 35 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1560,7 +1225,7 @@ const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-lg border border-black/40 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-lg border border-black/40 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1571,7 +1236,7 @@ const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#d9744b] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1580,15 +1245,15 @@ const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </h3>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed font-light flex-1 font-sans">
+      <p className="text-xs text-gray-400 leading-relaxed font-light flex-1 font-sans" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#d9744b]/5 border border-[#d9744b]/10 rounded-lg px-3.5 py-2.5 flex items-center gap-2">
+      <div className="bg-[#d9744b]/5 border border-[#d9744b]/10 rounded-lg px-3.5 py-2.5 flex items-center gap-2" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[10px] font-mono tracking-wider text-[#d9744b]">🏺 {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#d9744b] transition-colors cursor-pointer"
@@ -1606,14 +1271,14 @@ const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
           <Info size={10} /> Ask Sages
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM II CARD (Vedic Palm Leaf Scroll) ---
 const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1627,7 +1292,7 @@ const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-2xl border border-[#3e6b48]/20 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-2xl border border-[#3e6b48]/20 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1638,7 +1303,7 @@ const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#3e6b48] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1647,15 +1312,15 @@ const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-light flex-1 font-sans">
+      <p className="text-xs text-gray-300 leading-relaxed font-light flex-1 font-sans" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#3e6b48]/10 border border-[#3e6b48]/20 rounded-full px-4 py-1.5 flex items-center justify-center gap-2 self-start">
+      <div className="bg-[#3e6b48]/10 border border-[#3e6b48]/20 rounded-full px-4 py-1.5 flex items-center justify-center gap-2 self-start" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[9px] font-mono uppercase tracking-wider text-[#ffaa44]">🌿 {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#ffaa44] transition-colors cursor-pointer"
@@ -1673,14 +1338,14 @@ const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
           <Info size={10} /> Consult Sage
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM III CARD (Mauryan Sandstone Monolith) ---
 const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1693,7 +1358,7 @@ const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden border-2 border-[#322a24] relative mb-2">
+        <div className="w-full h-44 overflow-hidden border-2 border-[#322a24] relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1704,7 +1369,7 @@ const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#e5b37a] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1713,15 +1378,15 @@ const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </h3>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1">
+      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="border border-[#e5b37a]/30 rounded-none px-3.5 py-2 bg-[#e5b37a]/5">
+      <div className="border border-[#e5b37a]/30 rounded-none px-3.5 py-2 bg-[#e5b37a]/5" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[10px] font-mono tracking-wider text-[#e5b37a] font-bold uppercase font-sans">🏛️ {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-[#322a24] pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-[#322a24] pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#e5b37a] transition-colors cursor-pointer"
@@ -1739,14 +1404,14 @@ const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
           <Info size={10} /> Consult Scribe
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM IV CARD (Gupta Observatory Glass) ---
 const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1760,7 +1425,7 @@ const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-xl border border-white/10 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-white/10 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1771,7 +1436,7 @@ const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#818cf8] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1780,15 +1445,15 @@ const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-sans font-light flex-1">
+      <p className="text-xs text-gray-300 leading-relaxed font-sans font-light flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#818cf8]/10 border border-[#818cf8]/20 rounded-md px-3 py-2 flex items-center gap-2">
+      <div className="bg-[#818cf8]/10 border border-[#818cf8]/20 rounded-md px-3 py-2 flex items-center gap-2" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[10px] font-mono tracking-wider text-[#ffd700]">✦ {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#ffd700] transition-colors cursor-pointer"
@@ -1806,14 +1471,14 @@ const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
           <Info size={10} /> Ask Astronomer
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM V CARD (Chola Maritime Waves Sway) ---
 const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, scale: 0.95 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1829,7 +1494,7 @@ const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded border border-slate-800 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded border border-slate-800 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1840,7 +1505,7 @@ const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#38bdf8] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1849,15 +1514,15 @@ const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </h3>
       </div>
 
-      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1">
+      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#38bdf8]/5 border border-[#38bdf8]/15 rounded px-3 py-2">
+      <div className="bg-[#38bdf8]/5 border border-[#38bdf8]/15 rounded px-3 py-2" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[10px] font-mono tracking-wider text-[#38bdf8] font-bold uppercase">🔱 {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#38bdf8] transition-colors cursor-pointer"
@@ -1875,14 +1540,14 @@ const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
           <Info size={10} /> Inquire Dynasty
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM VI CARD (Hindu Throne of Dharma) ---
 const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1896,7 +1561,7 @@ const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f97316]/10 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f97316]/10 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1907,7 +1572,7 @@ const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#f97316] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1916,15 +1581,15 @@ const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1">
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#f97316]/5 border border-[#f97316]/15 rounded-xl px-3 py-2 flex items-center justify-center">
+      <div className="bg-[#f97316]/5 border border-[#f97316]/15 rounded-xl px-3 py-2 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[9px] font-mono tracking-wider text-[#f97316] font-bold">🏹 {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#f97316] transition-colors cursor-pointer"
@@ -1942,14 +1607,14 @@ const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
           <Info size={10} /> Consult Royal
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM VII CARD (Mughal Symmetrical Gardens) ---
 const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ scale: 0.85, opacity: 0 }}
       whileInView={{ scale: 1, opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -1963,7 +1628,7 @@ const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCh
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#10b981]/15 relative mb-2 shadow-inner">
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#10b981]/15 relative mb-2 shadow-inner" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -1974,7 +1639,7 @@ const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCh
         </div>
       )}
 
-      <div className="flex flex-col gap-1 z-10">
+      <div className="flex flex-col gap-1 z-10" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#10b981] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -1983,15 +1648,15 @@ const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCh
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1 z-10">
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1 z-10" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#10b981]/5 border border-[#10b981]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center z-10">
+      <div className="bg-[#10b981]/5 border border-[#10b981]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center z-10" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[9px] font-mono tracking-wider text-[#10b981] font-bold">🕌 {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2 z-10">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2 z-10" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#10b981] transition-colors cursor-pointer"
@@ -2009,14 +1674,14 @@ const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCh
           <Info size={10} /> Consult Scriptor
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM VIII CARD (Maratha Swarajya Spring Ambush) ---
 const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ x: index % 2 === 0 ? -120 : 120, opacity: 0 }}
       whileInView={{ x: 0, opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -2030,7 +1695,7 @@ const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f43f5e]/15 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f43f5e]/15 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -2041,7 +1706,7 @@ const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#f43f5e] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -2050,15 +1715,15 @@ const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1">
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#f43f5e]/5 border border-[#f43f5e]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center">
+      <div className="bg-[#f43f5e]/5 border border-[#f43f5e]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[9px] font-mono tracking-wider text-[#f43f5e] font-bold">🛡️ {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#f43f5e] transition-colors cursor-pointer"
@@ -2076,14 +1741,14 @@ const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
           <Info size={10} /> Ask Mavala
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
 // --- SUB-COMPONENT: ROOM IX CARD (Clash of Empires Spring Clash) ---
 const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
   return (
-    <motion.div 
+    <TiltCard 
       initial={{ y: index % 2 === 0 ? -120 : 120, opacity: 0, rotate: index % 2 === 0 ? -8 : 8 }}
       whileInView={{ y: 0, opacity: 1, rotate: 0 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -2097,7 +1762,7 @@ const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
       </div>
 
       {artifact.image && (
-        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#e11d48]/15 relative mb-2">
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#e11d48]/15 relative mb-2" style={{ transform: "translateZ(25px)" }}>
           <img 
             src={artifact.image} 
             alt={artifact.title} 
@@ -2108,7 +1773,7 @@ const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
         <span className="text-[#e11d48] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
           {artifact.subtitle}
         </span>
@@ -2117,15 +1782,15 @@ const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
         </h3>
       </div>
 
-      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1">
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
         {artifact.desc}
       </p>
 
-      <div className="bg-[#e11d48]/5 border border-[#e11d48]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center">
+      <div className="bg-[#e11d48]/5 border border-[#e11d48]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
         <span className="text-[9px] font-mono tracking-wider text-[#e11d48] font-bold">⚔️ {artifact.metric}</span>
       </div>
 
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
         <button 
           onClick={() => handleSpeak(artifact.desc)}
           className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#e11d48] transition-colors cursor-pointer"
@@ -2143,7 +1808,7 @@ const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
           <Info size={10} /> Consult Scholar
         </button>
       </div>
-    </motion.div>
+    </TiltCard>
   );
 };
 
