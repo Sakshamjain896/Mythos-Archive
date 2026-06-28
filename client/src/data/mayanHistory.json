@@ -1,0 +1,50 @@
+[
+  {
+    "id": "epoch-1",
+    "alignment": "left",
+    "imageAssetRequirement": "Aerial view of a dense jungle canopy with ancient stone pyramid structures emerging from the treetops.",
+    "title": "CHILDREN OF THE MAIZE",
+    "subtitle": "The Pre-Classic Period (c. 2000 BCE – 250 CE)",
+    "content": "The Maya did not emerge from nothing. For millennia before their golden age, they cultivated the jungle, domesticated maize, and built the earliest foundations of their cosmological worldview. Their origin myth, the Popol Vuh, proclaimed that humans were literally fashioned from corn — a sacred plant that was not just food, but the very substance of creation."
+  },
+  {
+    "id": "epoch-2",
+    "alignment": "right",
+    "imageAssetRequirement": "A glowing, stylized Mayan Long Count calendar disc with celestial motifs.",
+    "title": "MASTERS OF TIME",
+    "subtitle": "The Long Count Calendar (c. 5th Century BCE)",
+    "content": "No civilization has ever obsessed over time with such mathematical brilliance. The Maya developed three interlocking calendar systems, including the Long Count — capable of tracking dates across millions of years. Without telescopes, they calculated the Venus cycle to within two hours of modern measurements. Time was not merely a system of organization; it was the language of the gods."
+  },
+  {
+    "id": "epoch-3",
+    "alignment": "left",
+    "imageAssetRequirement": "A dramatic low-angle shot of the Temple of Kukulcan at Chichen Itza during the equinox shadow serpent phenomenon.",
+    "title": "CITIES IN THE JUNGLE",
+    "subtitle": "The Classic Period & City-States (c. 250 – 900 CE)",
+    "content": "At its height, the Maya world was a network of rival city-states — Tikal, Palenque, Copan, Calakmul — each a sovereign power with its own king, patron god, and aesthetic identity. These were not jungle villages; Tikal housed over 100,000 people and featured five towering temple-pyramids that pierced the forest canopy. Their architecture was a codex in stone, designed to align with stars and cast divine shadows."
+  },
+  {
+    "id": "epoch-4",
+    "alignment": "right",
+    "imageAssetRequirement": "Close-up of intricate Mayan glyphs carved into a jade-green stone stela.",
+    "title": "THE WRITTEN COSMOS",
+    "subtitle": "Mayan Hieroglyphics & The Dresden Codex (c. 7th Century CE)",
+    "content": "The Mayan writing system is one of only five fully independent writing systems ever developed on Earth. Using a combination of logograms and syllabic signs, scribes recorded history, astronomy, and prophecy on stone stelae and screenfold books called codices. The Dresden Codex, one of only four surviving Mayan books, contains astronomical tables of such precision they are still used by researchers today."
+  },
+  {
+    "id": "epoch-5",
+    "alignment": "left",
+    "imageAssetRequirement": "A cinematic, mystical depiction of a Mayan warrior in full jade and feathered regalia.",
+    "title": "THE BLOOD COVENANT",
+    "subtitle": "Ritual, Warfare & Sacrifice (c. 600 – 900 CE)",
+    "content": "To the Maya, blood was the premium currency of the cosmos. Kings and priests performed sacred bloodletting rituals to commune with their ancestors and nourish the gods who sustained the universe. Warfare was not waged for territory but for the capture of enemy rulers, whose public sacrifice on temple summits was a cosmic act — the most powerful offering that could be made to maintain the balance of creation."
+  },
+  {
+    "id": "epoch-6",
+    "alignment": "right",
+    "imageAssetRequirement": "An eerie, atmospheric shot of overgrown jungle vines reclaiming an ancient Mayan palace.",
+    "title": "THE GREAT COLLAPSE",
+    "subtitle": "The Terminal Classic Decline (c. 800 – 1000 CE)",
+    "content": "The collapse of the Classic Maya is one of history's greatest unsolved mysteries. Between 800 and 1000 CE, the great southern city-states were abandoned en masse. The inscriptions simply stop. Scholars point to a cascading catastrophe: prolonged megadrought, environmental degradation from deforestation, endless warfare, and political fragmentation. The jungle quietly reclaimed what human ambition had raised, preserving their secrets for a thousand years."
+  }
+]

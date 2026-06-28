@@ -1,0 +1,50 @@
+[
+  {
+    "id": "epoch-1",
+    "alignment": "left",
+    "imageAssetRequirement": "Dramatic, low-angle shot of the she-wolf nursing Romulus and Remus, cast in bronze.",
+    "title": "BORN FROM WOLVES",
+    "subtitle": "The Founding of Rome (c. 753 BCE)",
+    "content": "Rome was not built — it was willed into existence by men who refused to be subjects. Twin brothers Romulus and Remus, suckled by a she-wolf and raised in defiance, founded a village on the Palatine Hill that would grow to consume the known world. The city's founding myth encoded its destiny: power is not inherited, it is seized."
+  },
+  {
+    "id": "epoch-2",
+    "alignment": "right",
+    "imageAssetRequirement": "A row of marble busts of Roman senators against a dark, atmospheric background.",
+    "title": "THE REPUBLIC OF LAW",
+    "subtitle": "The Roman Republic (c. 509 – 27 BCE)",
+    "content": "Rome's greatest invention was not the aqueduct or the arch — it was the Republic. For nearly 500 years, power was distributed among elected magistrates, the Senate, and tribal assemblies. The Twelve Tables, Rome's first written legal code, established the radical principle that law should be public, knowable, and the same for all citizens. Every modern democracy traces its intellectual lineage to the Roman Forum."
+  },
+  {
+    "id": "epoch-3",
+    "alignment": "left",
+    "imageAssetRequirement": "Cinematic render of Julius Caesar crossing the Rubicon river with his legions.",
+    "title": "THE CROSSING OF THE RUBICON",
+    "subtitle": "Julius Caesar & The Death of the Republic (49 BCE)",
+    "content": "On January 10, 49 BCE, Julius Caesar uttered 'Alea iacta est' — the die is cast — and crossed the Rubicon with his army, an act that was constitutionally forbidden and irreversible. What followed was a civil war that shattered the Republic and the assassination of history's most consequential general on the Ides of March, 44 BCE. His death did not save the Republic; it only delayed its transformation into Empire."
+  },
+  {
+    "id": "epoch-4",
+    "alignment": "right",
+    "imageAssetRequirement": "An aerial, golden-hour render of the Colosseum with the Roman Forum in the background.",
+    "title": "PAX ROMANA",
+    "subtitle": "The Imperial Age (27 BCE – 180 CE)",
+    "content": "Under the first emperor Augustus, Rome entered its golden age — the Pax Romana, two centuries of unparalleled peace, prosperity, and architectural ambition. The Colosseum rose to seat 80,000 spectators. Aqueducts carried fresh water across hundreds of kilometres. The Pantheon, with its unreinforced concrete dome, remained the world's largest for over 1,300 years. Rome was no longer a city; it was the definition of civilization."
+  },
+  {
+    "id": "epoch-5",
+    "alignment": "left",
+    "imageAssetRequirement": "A weathered Roman road stretching into the horizon, overgrown with moss.",
+    "title": "ALL ROADS LEAD TO ROME",
+    "subtitle": "Roman Engineering & Infrastructure (c. 300 BCE – 400 CE)",
+    "content": "The Roman road network spanned over 400,000 kilometres — enough to circle the Earth ten times. Built with drainage layers, cambered surfaces, and precise gradients, Roman roads were so well-engineered that many still exist today beneath European streets. But roads were only part of the legacy: their aqueducts, sewers, concrete, and military camps became the invisible skeleton of Western civilization."
+  },
+  {
+    "id": "epoch-6",
+    "alignment": "right",
+    "imageAssetRequirement": "A dramatic, cinematic depiction of Visigoths sacking Rome, fire reflected in marble columns.",
+    "title": "THE ETERNAL CITY FALLS",
+    "subtitle": "The Fall of the Western Empire (476 CE)",
+    "content": "No empire is permanent. Weakened by political instability, economic collapse, overextension, and relentless barbarian pressure, the Western Roman Empire collapsed in 476 CE when the Germanic chieftain Odoacer deposed the last emperor, Romulus Augustulus. Yet Rome did not truly die — its language became the romance languages of Europe, its law became the foundation of international jurisprudence, and its ghost lived on in the Holy Roman Empire for a thousand years."
+  }
+]

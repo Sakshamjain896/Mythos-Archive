@@ -1,0 +1,377 @@
+.authContainer {
+  width: 100vw;
+  height: 100vh;
+  background: #0a0807;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 1100px;
+  height: 85vh;
+  background: #110e0c;
+  display: flex;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.visualSide {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.slideBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.visualOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9));
+  z-index: 2;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: #f2e8d5;
+  font-family: 'Cinzel Decorative', serif;
+  font-weight: bold;
+  position: relative;
+  z-index: 3;
+}
+
+.logoIcon {
+  width: 36px;
+  height: 36px;
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.visualContent {
+  color: #f2e8d5;
+  position: relative;
+  z-index: 3;
+}
+
+.serifSmall {
+  font-family: 'Cinzel Decorative', serif;
+  color: #d4af37;
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.serifLarge {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 3rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+}
+
+.description {
+  font-family: 'Inter', sans-serif;
+  opacity: 0.7;
+  max-width: 350px;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.pagination {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.activeDot {
+  width: 32px;
+  height: 6px;
+  background: #d4af37;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.formSide {
+  width: 45%;
+  background: #0d0b0a;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.topNav {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.ghostButton {
+  background: none;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #f2e8d5;
+  padding: 0.6rem 2rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.ghostButton:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.formContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.formTitle {
+  font-family: 'Cinzel Decorative', serif;
+  color: #f2e8d5;
+  font-size: 2.2rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d4af37;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.formSubtitle {
+  text-align: center;
+  color: #f2e8d5;
+  opacity: 0.5;
+  font-size: 0.9rem;
+  margin-bottom: 2.5rem;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  color: #f2e8d5;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+  opacity: 0.8;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  color: #d4af37;
+  opacity: 0.6;
+}
+
+.inputWrapper input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 1rem 1rem 1rem 3rem;
+  color: #f2e8d5;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.inputWrapper input:focus {
+  outline: none;
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.eyeToggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #d4af37;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.formExtras {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #f2e8d5;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.forgotPass {
+  color: #d4af37;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.mainButton {
+  width: 100%;
+  background: linear-gradient(135deg, #d4af37 0%, #b58d63 100%);
+  border: none;
+  padding: 1.2rem;
+  border-radius: 12px;
+  color: #110e0c;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+  margin-bottom: 2rem;
+}
+
+.mainButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(212, 175, 55, 0.3);
+  filter: brightness(1.1);
+}
+
+.socialSeparator {
+  position: relative;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.socialSeparator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.socialSeparator span {
+  position: relative;
+  background: #0d0b0a;
+  padding: 0 1rem;
+  color: #f2e8d5;
+  font-size: 0.75rem;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.socialButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.socialBtn {
+  flex: 1;
+  background: none;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 10px;
+  padding: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: #f2e8d5;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.socialBtn img {
+  width: 18px;
+  height: 18px;
+}
+
+.socialBtn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.switchText {
+  text-align: center;
+  color: #f2e8d5;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.switchText span {
+  color: #d4af37;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.switchText span:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .visualSide {
+    display: none;
+  }
+  .formSide {
+    width: 100%;
+  }
+}

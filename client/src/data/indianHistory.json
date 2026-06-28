@@ -1,0 +1,58 @@
+[
+  {
+    "id": "epoch-1",
+    "alignment": "left",
+    "imageAssetRequirement": "Macro shot of a Harappan seal or perfectly aligned ancient terracotta bricks.",
+    "title": "THE DAWN OF ORDER",
+    "subtitle": "Indus Valley Civilization (c. 2500 BCE)",
+    "content": "Before the empires of the West laid their foundations, the Indus Valley breathed life into urban mastery. Mohenjo-Daro and Harappa were not merely cities; they were ancient supercomputers of civic engineering, built on flawless grids and unified weights—a silent testament to a society driven by order, peace, and unparalleled architectural innovation."
+  },
+  {
+    "id": "epoch-2",
+    "alignment": "right",
+    "imageAssetRequirement": "Glowing, ethereal depiction of Sanskrit verses etched on palm leaves.",
+    "title": "THE SYMPHONY OF THE MIND",
+    "subtitle": "The Vedic Age (c. 1500 BCE - 500 BCE)",
+    "content": "As ancient cities faded into the earth, human inquiry turned inward. The Vedic period birthed Sanskrit—a language of mathematical precision designed to capture the vibrations of the universe. Here, philosophy was not just thought; it was a science of consciousness, exploring the eternal cycles of creation, dissolution, and the self."
+  },
+  {
+    "id": "epoch-3",
+    "alignment": "left",
+    "imageAssetRequirement": "A cinematic, shadowy render of the Ashoka Pillar or the Lion Capital.",
+    "title": "THE WHEEL OF DHAMMA",
+    "subtitle": "The Mauryan Empire (c. 322 BCE - 185 BCE)",
+    "content": "Forged in the fires of conquest, the Mauryan Empire eventually chose the path of peace. Under Emperor Ashoka, a subcontinent was united not by the sword, but by 'Dhamma'—a universal law of righteousness and tolerance. His edicts, carved into stone pillars across the land, stand as humanity's earliest declarations of human rights and animal welfare."
+  },
+  {
+    "id": "epoch-4",
+    "alignment": "right",
+    "imageAssetRequirement": "Stylized, metallic astrolabe or cosmic map dissolving into a starfield.",
+    "title": "THE MATHEMATICAL ZENITH",
+    "subtitle": "The Gupta Empire (c. 319 CE - 543 CE)",
+    "content": "The cosmos cannot be measured without understanding nothingness. In this classical Golden Age, Indian astronomers and mathematicians gifted humanity the concept of 'Zero' and the decimal system. From the rustless iron pillars of antiquity to the calculation of planetary orbits, their algorithms built the foundation of the modern digital world."
+  },
+  {
+    "id": "epoch-5",
+    "alignment": "left",
+    "imageAssetRequirement": "A dramatic, low-angle shot of the Brihadisvara Temple towering into the sky.",
+    "title": "MASTERS OF THE TIDE",
+    "subtitle": "The Chola Dynasty & Temple Builders (c. 9th - 13th Century CE)",
+    "content": "While the north witnessed changing tides of kingdoms, the southern dynasties carved mountains into monolithic temples and ruled the oceans. The Cholas commanded a maritime empire that stretched across Southeast Asia, exporting art, architecture, and a bronze-casting tradition that remains unmatched in human history."
+  },
+  {
+    "id": "epoch-6",
+    "alignment": "right",
+    "imageAssetRequirement": "A close-up of intricate Pietra Dura (marble inlay work) with geometric Islamic-Indian synthesis.",
+    "title": "THE MARBLE SYNTHESIS",
+    "subtitle": "The Mughal Era (c. 1526 CE - 1857 CE)",
+    "content": "A breathtaking synthesis of Persian elegance and Indian soul. The Mughal era transformed the subcontinent's skyline with monumental architecture, poetry, and art. It was an age of immense wealth and cultural fusion, culminating in structures of eternal symmetry that continue to captivate the imagination of the world."
+  },
+  {
+    "id": "epoch-7",
+    "alignment": "left",
+    "imageAssetRequirement": "A high-contrast, black-and-white stylized image of the spinning wheel (Charkha).",
+    "title": "THE RESILIENT SPIRIT",
+    "subtitle": "The Struggle for Freedom (1857 CE - 1947 CE)",
+    "content": "Through the crucible of colonization, the Indian spirit remained unbroken. The modern era was forged in a revolutionary fire fueled by non-violence and unyielding truth. This epic struggle did not just liberate a nation; it provided a blueprint for civil rights movements across the globe, proving that the human spirit is the ultimate sovereign."
+  }
+]

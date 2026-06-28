@@ -1,0 +1,124 @@
+/* ============================================================
+   HistoryBackground.css
+   Pure CSS animations for the Mythos Archive history panels.
+   No JavaScript calculations — all animations run on the GPU
+   via transform & opacity for buttery 60fps performance.
+   ============================================================ */
+
+/* Root container */
+.history-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #07060a;
+}
+
+/* ── Deep Background Gradient ── */
+.history-bg__gradient {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-gradient);
+  animation: gradientShift 16s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+
+@keyframes gradientShift {
+  0%   { opacity: 0.7; }
+  100% { opacity: 1.0; }
+}
+
+/* ── Ambient Orbs ── */
+.history-bg__orbs-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.history-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: var(--orb-opacity);
+  animation:
+    orbFloat var(--orb-duration) ease-in-out var(--orb-delay) infinite alternate,
+    orbPulse calc(var(--orb-duration) * 0.6s) ease-in-out var(--orb-delay) infinite alternate;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+
+@keyframes orbFloat {
+  0%   { transform: translate(-50%, -50%) translateY(0px)   scale(1);    }
+  50%  { transform: translate(-50%, -50%) translateY(-30px) scale(1.05); }
+  100% { transform: translate(-50%, -50%) translateY(10px)  scale(0.97); }
+}
+
+@keyframes orbPulse {
+  0%   { opacity: calc(var(--orb-opacity) * 0.6); }
+  100% { opacity: calc(var(--orb-opacity) * 1.4); }
+}
+
+/* ── Floating Dust Particles ── */
+.history-bg__particles-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.history-bg__particle {
+  position: absolute;
+  bottom: -10px;
+  left: var(--particle-x);
+  width: var(--particle-size);
+  height: var(--particle-size);
+  border-radius: 50%;
+  background: var(--particle-color);
+  opacity: 0;
+  animation: particleRise var(--particle-duration) ease-in var(--particle-delay) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes particleRise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  10% {
+    opacity: 0.6;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100vh) translateX(calc(sin(1rad) * 60px)) scale(0.3);
+  }
+}
+
+/* ── Cinematic Vignette ── */
+.history-bg__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.5) 75%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Subtle Scan Lines (depth texture) ── */
+.history-bg__scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}

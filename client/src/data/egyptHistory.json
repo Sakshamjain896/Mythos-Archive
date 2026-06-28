@@ -1,0 +1,50 @@
+[
+  {
+    "id": "epoch-1",
+    "alignment": "left",
+    "imageAssetRequirement": "Aerial cinematic shot of the Nile delta at golden hour.",
+    "title": "THE GIFT OF THE NILE",
+    "subtitle": "Predynastic & Early Dynastic Period (c. 3100 BCE)",
+    "content": "Before there were kings, there was the river. The Nile's annual inundation deposited rich black silt upon the desert, turning desolation into an emerald paradise. It was this cosmic generosity that gave birth to civilization's first great nation-state — a kingdom unified by shared ritual, shared grain, and the shared belief in divine kingship."
+  },
+  {
+    "id": "epoch-2",
+    "alignment": "right",
+    "imageAssetRequirement": "A dramatic wide-angle shot of the three Giza pyramids at dusk, lit in gold.",
+    "title": "MONUMENTS TO ETERNITY",
+    "subtitle": "The Old Kingdom (c. 2686 – 2181 BCE)",
+    "content": "The architects of the Old Kingdom did not merely build structures; they encoded eternity in limestone. The Great Pyramid of Giza, aligned with astronomical precision to the north star, stands as the world's oldest wonder and its most enduring mystery. With two million stone blocks, each averaging 2.5 tonnes, they built a monument that has outlasted every empire that followed."
+  },
+  {
+    "id": "epoch-3",
+    "alignment": "left",
+    "imageAssetRequirement": "Close-up of hieroglyphics glowing with gold inlay on a black granite wall.",
+    "title": "THE LANGUAGE OF GODS",
+    "subtitle": "The Age of Hieroglyphics (c. 3200 – 400 BCE)",
+    "content": "Hieroglyphics were not mere letters — they were sacred power. Each pictogram was believed to hold the essence of the thing it depicted. To write the name of a pharaoh was to breathe life into their eternal soul. For three thousand years, this intricate system of over 700 symbols governed the administration of the mightiest civilization the ancient world had ever seen."
+  },
+  {
+    "id": "epoch-4",
+    "alignment": "right",
+    "imageAssetRequirement": "Portrait-style render of Ramesses II's colossal statue at Abu Simbel.",
+    "title": "THE WARRIOR KINGS",
+    "subtitle": "The New Kingdom & Ramesses II (c. 1550 – 1070 BCE)",
+    "content": "The New Kingdom was Egypt's imperial age — an era of expansion, opulence, and military brilliance. Pharaoh Ramesses II, who ruled for 66 years, redefined propaganda through stone. His temples at Abu Simbel were carved so precisely that twice a year, on his birthday and coronation day, the rising sun illuminates his face and that of Amun, leaving the statue of darkness alone in the shadows."
+  },
+  {
+    "id": "epoch-5",
+    "alignment": "left",
+    "imageAssetRequirement": "Stylized golden canopic jar against a dark, cinematic background.",
+    "title": "THE SCIENCE OF DEATH",
+    "subtitle": "Mummification & The Book of the Dead (c. 2400 – 500 BCE)",
+    "content": "No civilization has ever shown such a sophisticated preoccupation with death — because to them, death was merely a doorway. Mummification, a 70-day process employing advanced chemistry, biology, and surgical precision, preserved the body for the soul's return. The Book of the Dead, a funerary text tailored to each individual, served as their personal guide through the Duat, the Egyptian underworld."
+  },
+  {
+    "id": "epoch-6",
+    "alignment": "right",
+    "imageAssetRequirement": "A dramatic portrait of Cleopatra with kohl-lined eyes and golden headdress.",
+    "title": "THE LAST DYNASTY",
+    "subtitle": "The Ptolemaic Kingdom & Cleopatra (c. 305 – 30 BCE)",
+    "content": "The final chapter of Pharaonic Egypt was written in Greek. The Ptolemaic dynasty, founded after Alexander the Great's conquest, produced Egypt's most famous ruler: Cleopatra VII. A polyglot who spoke nine languages and commanded the loyalty of the Library of Alexandria, she was the last active ruler of Ptolemaic Egypt before its absorption into the Roman Empire, ending 3,000 years of a civilization unlike any other."
+  }
+]
