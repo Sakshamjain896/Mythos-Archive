@@ -1,13 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Volume2, MessageSquare, X, Info, 
-  HelpCircle, Sparkles, Music, VolumeX
+  HelpCircle, Sparkles, Compass, Award, Anchor, Sun, Flame, Shield, BookOpen, Music, VolumeX
 } from 'lucide-react';
 import { useNavigationStore } from '../store/navigationStore';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { PresentationControls } from '@react-three/drei';
-import * as THREE from 'three';
 
 // --- SANSKRIT DICTIONARY & MAP ---
 const LETTER_TO_SANSKRIT = {
@@ -39,7 +36,7 @@ const LETTER_TO_SANSKRIT = {
   Z: { char: "झ", name: "Jyoti (Light)" }
 };
 
-// --- REUSABLE 3D PERSPECTIVE TILT WRAPPER (2D HTML overlay elements) ---
+// --- REUSABLE 3D PERSPECTIVE TILT WRAPPER ---
 const TiltCard = ({ children, className, style, onClick, whileHover, ...props }) => {
   const cardRef = useRef(null);
   const [rotateX, setRotateX] = useState(0);
@@ -50,8 +47,10 @@ const TiltCard = ({ children, className, style, onClick, whileHover, ...props })
     const rect = cardRef.current.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
+    // Mouse offset relative to center of the card
     const mouseX = e.clientX - rect.left - width / 2;
     const mouseY = e.clientY - rect.top - height / 2;
+    // Max 12 degrees of rotation
     const rX = -(mouseY / height) * 12;
     const rY = (mouseX / width) * 12;
     setRotateX(rX);
@@ -85,308 +84,6 @@ const TiltCard = ({ children, className, style, onClick, whileHover, ...props })
   );
 };
 
-// --- PROCEDURAL 3D ENGRAVED CARD MESH ---
-function ThreeDArtifactCard({ position, title, subtitle, desc, metric, accentColor, index, activeEra, onClick }) {
-  const meshRef = useRef();
-  const [hovered, setHovered] = useState(false);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-
-  // Generate highly realistic slate-engraved text/graphics procedurally onto a canvas texture
-  const cardTexture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 768;
-    const ctx = canvas.getContext('2d');
-    
-    // 1. Textured dark slate base color
-    ctx.fillStyle = '#161210';
-    ctx.fillRect(0, 0, 512, 768);
-    
-    // Fine basalt noise/grain for stone surface realism
-    for (let i = 0; i < 25000; i++) {
-      const x = Math.random() * 512;
-      const y = Math.random() * 768;
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.055})`;
-      ctx.fillRect(x, y, 1, 1);
-    }
-    
-    // Cracked veins in the slate
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 10; i++) {
-      ctx.beginPath();
-      ctx.moveTo(Math.random() * 512, 0);
-      ctx.lineTo(Math.random() * 512, 768);
-      ctx.stroke();
-    }
-    
-    // 2. Ornate Border frame
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 12;
-    ctx.strokeRect(18, 18, 476, 732);
-    
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(30, 30, 452, 708);
-    
-    // Corner accent squares
-    ctx.fillStyle = accentColor;
-    ctx.fillRect(18, 18, 22, 22);
-    ctx.fillRect(472, 18, 22, 22);
-    ctx.fillRect(18, 728, 22, 22);
-    ctx.fillRect(472, 728, 22, 22);
-
-    // 3. Central Engraving drawing area
-    ctx.save();
-    ctx.translate(256, 260); // Center of drawing
-    
-    // Draw concentric ritual aura rings
-    ctx.strokeStyle = `${accentColor}35`;
-    ctx.lineWidth = 1.5;
-    for (let r = 40; r <= 100; r += 20) {
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    
-    // Draw an intricate geometry/mandala star pattern based on index
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    const numPoints = 12 + (index * 4);
-    for (let i = 0; i < numPoints * 2; i++) {
-      const angle = (i * Math.PI) / numPoints;
-      const r = i % 2 === 0 ? 95 : 45;
-      ctx.lineTo(r * Math.cos(angle), r * Math.sin(angle));
-    }
-    ctx.closePath();
-    ctx.stroke();
-    
-    // Draw ancient center symbol
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 36px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    let symbol = "ॐ";
-    if (activeEra === 'indus') symbol = "🏺";
-    else if (activeEra === 'vedic') symbol = "ॐ";
-    else if (activeEra === 'maurya') symbol = "☸";
-    else if (activeEra === 'gupta') symbol = "🪐";
-    else if (activeEra === 'chola') symbol = "⚓";
-    else if (activeEra === 'hindu') symbol = "🔱";
-    else if (activeEra === 'mughal') symbol = "🕌";
-    else if (activeEra === 'maratha') symbol = "🚩";
-    else if (activeEra === 'battles') symbol = "⚔";
-    
-    ctx.fillText(symbol, 0, 0);
-    ctx.restore();
-    
-    // 4. Text Content (Rendered onto the card base itself for 100% offline robustness)
-    ctx.fillStyle = '#fffaf0';
-    ctx.font = 'bold 22px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(title.toUpperCase(), 256, 440);
-    
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 12px monospace';
-    ctx.fillText(subtitle.toUpperCase(), 256, 480);
-    
-    // Wrapped description text
-    ctx.fillStyle = '#c8c0b8';
-    ctx.font = '14px sans-serif';
-    const words = desc.split(' ');
-    let line = '';
-    let y = 530;
-    for (let n = 0; n < words.length; n++) {
-      let testLine = line + words[n] + ' ';
-      let metrics = ctx.measureText(testLine);
-      if (metrics.width > 380 && n > 0) {
-        ctx.fillText(line, 256, y);
-        line = words[n] + ' ';
-        y += 22;
-      } else {
-        line = testLine;
-      }
-    }
-    ctx.fillText(line, 256, y);
-    
-    // Metric badge at bottom of physical card
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-    ctx.fillRect(56, 675, 400, 36);
-    ctx.strokeStyle = `${accentColor}30`;
-    ctx.strokeRect(56, 675, 400, 36);
-    
-    ctx.fillStyle = accentColor;
-    ctx.font = 'bold 12px monospace';
-    ctx.fillText(metric.toUpperCase(), 256, 698);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    return texture;
-  }, [accentColor, title, subtitle, desc, metric, index, activeEra]);
-
-  useFrame((state) => {
-    if (!meshRef.current) return;
-    
-    // Floating sinusoidal animation
-    const floatY = Math.sin(state.clock.elapsedTime * 1.5 + position[0]) * 0.04;
-    meshRef.current.position.y = position[1] + floatY;
-    
-    // Smooth interpolations for rotation
-    meshRef.current.rotation.y = THREE.MathUtils.lerp(
-      meshRef.current.rotation.y,
-      hovered ? rotateY : Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.06,
-      0.1
-    );
-    meshRef.current.rotation.x = THREE.MathUtils.lerp(
-      meshRef.current.rotation.x,
-      hovered ? rotateX : 0,
-      0.1
-    );
-
-    // Dynamic hover translation along Z-axis
-    const targetZ = hovered ? 0.35 : position[2];
-    meshRef.current.position.z = THREE.MathUtils.lerp(meshRef.current.position.z, targetZ, 0.1);
-  });
-
-  const handlePointerMove = (e) => {
-    e.stopPropagation();
-    const rect = e.nativeEvent.target.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left - width / 2;
-    const mouseY = e.clientY - rect.top - height / 2;
-    setRotateX(-(mouseY / height) * 0.35);
-    setRotateY((mouseX / width) * 0.35);
-  };
-
-  return (
-    <group
-      ref={meshRef}
-      position={[position[0], position[1], position[2]]}
-      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-      onPointerOut={() => { setHovered(false); setRotateX(0); setRotateY(0); }}
-      onPointerMove={handlePointerMove}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-    >
-      {/* 3D Card Base Mesh with bump mapped text drawing */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.3, 1.9, 0.05]} />
-        <meshStandardMaterial 
-          map={cardTexture}
-          bumpMap={cardTexture}
-          bumpScale={0.02}
-          roughness={0.8}
-          metalness={0.12}
-        />
-      </mesh>
-
-      {/* Interactive hover glow outline */}
-      {hovered && (
-        <mesh position={[0, 0, 0.005]}>
-          <boxGeometry args={[1.34, 1.94, 0.051]} />
-          <meshBasicMaterial color={accentColor} wireframe opacity={0.35} transparent />
-        </mesh>
-      )}
-    </group>
-  );
-}
-
-// --- THREE.JS 3D CURATION GALLERY STAGE ---
-const Indian3DStage = ({ activeEra, eraArtifacts, accentColor, onCardSelect }) => {
-  const [hasWebGL, setHasWebGL] = useState(true);
-
-  useEffect(() => {
-    try {
-      const canvas = document.createElement('canvas');
-      const isSupported = !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
-      setHasWebGL(isSupported);
-    } catch (e) {
-      setHasWebGL(false);
-    }
-  }, []);
-
-  if (!hasWebGL) {
-    return (
-      <div className="w-full h-full bg-black/60 flex items-center justify-center">
-        <p className="text-gray-500 font-mono text-xs">WebGL is required to render the 3D museum gallery.</p>
-      </div>
-    );
-  }
-
-  // 3D placements for the three cards
-  const positions = [
-    [-1.5, 0, -0.2], // Left card position
-    [0, 0.05, 0],    // Center card position
-    [1.5, 0, -0.2]   // Right card position
-  ];
-
-  return (
-    <div className="w-full h-full relative">
-      <Canvas shadows camera={{ position: [0, 0, 2.5], fov: 50 }}>
-        <ambientLight intensity={0.4} />
-        
-        {/* Shadow-casting Directional keylight */}
-        <directionalLight 
-          position={[2, 4, 3]} 
-          intensity={1.5} 
-          castShadow 
-          shadow-mapSize={[1024, 1024]}
-        />
-        
-        {/* Volumetric glow spot behind cards */}
-        <spotLight 
-          position={[0, 0, -0.8]} 
-          angle={1.1} 
-          penumbra={1} 
-          intensity={5} 
-          color={accentColor} 
-        />
-        
-        <pointLight position={[0, 1.2, 0.5]} intensity={1} color="#fff" />
-        
-        <PresentationControls 
-          global 
-          zoom={1.05} 
-          polar={[-Math.PI / 4, Math.PI / 4]} 
-          azimuth={[-Math.PI / 3, Math.PI / 3]} 
-          config={{ mass: 1.5, tension: 280, friction: 32 }}
-        >
-          <group position={[0, -0.05, 0]}>
-            {eraArtifacts.map((art, idx) => (
-              <ThreeDArtifactCard 
-                key={idx}
-                position={positions[idx]}
-                title={art.title}
-                subtitle={art.subtitle}
-                desc={art.desc}
-                metric={art.metric}
-                accentColor={accentColor}
-                index={idx}
-                activeEra={activeEra}
-                onClick={() => onCardSelect(art, idx)}
-              />
-            ))}
-          </group>
-        </PresentationControls>
-
-        {/* Backdrop catcher plane */}
-        <mesh position={[0, 0, -1.0]} receiveShadow>
-          <planeGeometry args={[10, 8]} />
-          <meshStandardMaterial color="#0c0a09" roughness={0.9} />
-        </mesh>
-      </Canvas>
-      
-      <div className="absolute top-3 right-3 text-[7px] font-mono tracking-widest text-gray-600/80 pointer-events-none uppercase">
-        🖱️ Drag stage to rotate view • Hover to inspect card • Click to launch detail vault
-      </div>
-    </div>
-  );
-};
-
 // --- INDIAN ARTIFACTS DATABASE ---
 const INDIAN_ARTIFACTS = {
   indus: [
@@ -394,19 +91,22 @@ const INDIAN_ARTIFACTS = {
       title: "The Priest-King Bust",
       subtitle: "Mohenjo-Daro • Indus Valley Civilization (c. 2000 BCE)",
       desc: "A highly detailed steatite sculpture depicting a bearded figure dressed in a trefoil-patterned robe. Thought to represent a high priest or a civic governor, it exemplifies the exceptional stone carving mastery of Harappan artisans.",
-      metric: "Material: Carved Steatite Soapstone"
+      metric: "Material: Carved Steatite Soapstone",
+      image: "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Lost-Wax Dancing Girl",
       subtitle: "Mohenjo-Daro • Indus Valley Civilization (c. 2300 BCE)",
       desc: "A globally renowned copper-bronze casting showing a young woman adorned in bangles standing confidently. It indicates a remarkably advanced understanding of metallurgy and lost-wax casting three millennia ago.",
-      metric: "Material: Cast Bronze & Copper"
+      metric: "Material: Cast Bronze & Copper",
+      image: "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Pashupati Sacred Seal",
       subtitle: "Harappa Cache • Indus Valley Civilization (c. 2500 BCE)",
       desc: "An intaglio steatite seal displaying a horned, three-faced figure seated in a meditative yogic posture, surrounded by wild beasts. Historically regarded as a proto-historic representation of Shiva.",
-      metric: "Relic: Intaglio Carved Steatite Seal"
+      metric: "Relic: Intaglio Carved Steatite Seal",
+      image: "https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=600&auto=format&fit=crop"
     }
   ],
   vedic: [
@@ -414,19 +114,22 @@ const INDIAN_ARTIFACTS = {
       title: "Rigveda Palm-Leaf Manuscript",
       subtitle: "Vedic Plains • Early Iron Age Era (c. 1500 BCE)",
       desc: "Early written transcriptions of the oldest Sanskrit hymns. These texts preserve sacred sonic chants detailing the Vedic concepts of Rta (cosmic order), creation hymns, and natural elements.",
-      metric: "Script: Early Sanskrit on Palm Leaves"
+      metric: "Script: Early Sanskrit on Palm Leaves",
+      image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Sulba Sutra Vedic Altar Bricks",
       subtitle: "Ganga Valley • Later Vedic Period (c. 800 BCE)",
       desc: "Sacred brick altar constructions built with absolute mathematical precision. The Sulba Sutras defined complex geometry, circle squaring, and altar proportions essential for fire sacrifices.",
-      metric: "Geometry: Baked Clay Altar Bricks"
+      metric: "Geometry: Baked Clay Altar Bricks",
+      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "The Saraswati Veena",
       subtitle: "Indus Plains • Vedic Musical Tradition",
       desc: "A classical hollow jackwood lute originating from Vedic references. Inscribed as the instrument of Saraswati, it represents the ancient science of sonic frequencies and cosmic acoustics.",
-      metric: "Instrument: Hand-Carved Jackwood Lute"
+      metric: "Instrument: Hand-Carved Jackwood Lute",
+      image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=600&auto=format&fit=crop"
     }
   ],
   maurya: [
@@ -434,19 +137,22 @@ const INDIAN_ARTIFACTS = {
       title: "Lion Capital of Ashoka",
       subtitle: "Sarnath Temple • Mauryan Empire (c. 250 BCE)",
       desc: "A colossal, mirror-polished sandstone capital presenting four Asiatic lions back-to-back. It stands atop a lotus base decorated with wheels (dharmachakras), symbolizing imperial and spiritual law.",
-      metric: "Craft: High-Gloss Polished Sandstone"
+      metric: "Craft: High-Gloss Polished Sandstone",
+      image: "https://images.unsplash.com/photo-1600577916048-804c9191e36c?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Edict Pillars of Dhamma",
       subtitle: "Subcontinent Borderlands • Mauryan Empire (c. 250 BCE)",
       desc: "Monolithic sandstone pillars erected by Emperor Ashoka. Carved in Prakrit Brahmi script, these pillars contain public decrees outlining religious tolerance, peace, and human rights.",
-      metric: "Height: 15-Meter Sandstone Monoliths"
+      metric: "Height: 15-Meter Sandstone Monoliths",
+      image: "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Silver Punch-Marked Currency",
       subtitle: "Pataliputra Treasury • Mauryan Empire",
       desc: "Irregularly shaped silver coins carrying punch-marked stamps of wheels, suns, mountains, and wildlife, demonstrating the complex economic trade system of the empire.",
-      metric: "Metal: Stamped Pure Silver Bullion"
+      metric: "Metal: Stamped Pure Silver Bullion",
+      image: "https://images.unsplash.com/photo-1613143577717-a0f60baee436?q=80&w=600&auto=format&fit=crop"
     }
   ],
   gupta: [
@@ -454,19 +160,22 @@ const INDIAN_ARTIFACTS = {
       title: "Aryabhata's Solar Astrolabe",
       subtitle: "Kusumapura Observatory • Gupta Empire (c. 499 CE)",
       desc: "Astronomical copper dials and star charts used by Aryabhata. This mathematics school calculated the value of Pi, discovered the heliocentric earth rotation, and introduced the decimal system.",
-      metric: "Science: Heliocentric Star Charts"
+      metric: "Science: Heliocentric Star Charts",
+      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Iron Pillar of Delhi",
       subtitle: "Mehrauli Sanctuary • Gupta Golden Age (c. 402 CE)",
       desc: "A massive wrought iron column standing 7.2 meters tall. Built for King Chandragupta II, it is globally celebrated for its exceptional rust-resistant alloy composition.",
-      metric: "Material: Corrosion-Resistant Wrought Iron"
+      metric: "Material: Corrosion-Resistant Wrought Iron",
+      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Seated Sarnath Buddha",
       subtitle: "Sarnath Excavation • Gupta Golden Age (c. 475 CE)",
       desc: "A sandstone sculpture depicting Gautama Buddha in the wheel-turning Mudra. It represents the height of Gupta artistic elegance, renowned for its serene facial expression.",
-      metric: "Sculpture: Carved Chunar Sandstone"
+      metric: "Sculpture: Carved Chunar Sandstone",
+      image: "https://images.unsplash.com/photo-1590736969955-71cc94801759?q=80&w=600&auto=format&fit=crop"
     }
   ],
   chola: [
@@ -474,19 +183,22 @@ const INDIAN_ARTIFACTS = {
       title: "Lost-Wax Shiva Nataraja",
       subtitle: "Thanjavur Palace • Chola Empire (c. 10th Century CE)",
       desc: "A beautiful representation of Shiva doing the Tandava cosmic dance. Cast using lost-wax bronze molds, it depicts the cosmic cycles of creation, protection, and destruction.",
-      metric: "Process: Lost-Wax Bronze Sculpture"
+      metric: "Process: Lost-Wax Bronze Sculpture",
+      image: "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Brihadisvara Granite Temple Model",
       subtitle: "Thanjavur Citadel • Chola Golden Age (c. 1010 CE)",
       desc: "A structural mockup of the great Brihadisvara Vimana tower. Built entirely from interlocking granite stones without mortar, it stands as a triumph of medieval construction.",
-      metric: "Architecture: Monolithic Granite Vimana"
+      metric: "Architecture: Monolithic Granite Vimana",
+      image: "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Imperial Chola Tiger Charter",
       subtitle: "Maritime Archives • Chola Empire (c. 1050 CE)",
       desc: "Copper charter plates bound together by a heavy bronze ring bearing the imperial emblem of the Tiger, Bow, and Fish. Authorized trade grants with Southeast Asian ports.",
-      metric: "Relic: Bronze Copper Charter Plates"
+      metric: "Relic: Bronze Copper Charter Plates",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"
     }
   ],
   hindu: [
@@ -494,19 +206,22 @@ const INDIAN_ARTIFACTS = {
       title: "Vittala Stone Chariot",
       subtitle: "Hampi Monuments • Vijayanagara Empire (c. 15th Century)",
       desc: "An architectural marvel representing a miniature shrine shaped as a chariot. Built from interlocking granite slabs, its wheels once rotated, representing the celestial vehicle of Vishnu.",
-      metric: "Art: Interlocking Granite Shrine"
+      metric: "Art: Interlocking Granite Shrine",
+      image: "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Rajput Khanda Sword",
       subtitle: "Mewar Royal Armory • Rajput Golden Age",
       desc: "A heavy double-edged broadsword featuring an ornate basket hilt. Hand-forged with Wootz carbon steel, it represents the lineage and fierce defense of Rajput kings.",
-      metric: "Weaponry: Wootz Carbon Steel Blade"
+      metric: "Weaponry: Wootz Carbon Steel Blade",
+      image: "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Surya Vamsha Gilded Charter",
       subtitle: "Chittorgarh Palace • Solar Lineage Ledger",
       desc: "A gilded copper charter tracking the genealogy of Mewar's rulers. It links dynastic lineage to the sun deity Surya, detailing historic coronation rights and territorial grants.",
-      metric: "Plaque: Gilded Copper Genealogy"
+      metric: "Plaque: Gilded Copper Genealogy",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"
     }
   ],
   mughal: [
@@ -514,19 +229,22 @@ const INDIAN_ARTIFACTS = {
       title: "Octagonal Celestial Astrolabe",
       subtitle: "Fatehpur Sikri • Mughal Court (c. 1580 CE)",
       desc: "A highly complex celestial calculator forged in solid brass with silver wire inlays. Court astronomers under Akbar utilized it to map planetary alignments and solar calendars.",
-      metric: "Calculation: Brass & Silver Astrolabe"
+      metric: "Calculation: Brass & Silver Astrolabe",
+      image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "White Jade Horse-Head Khanjar",
       subtitle: "Shah Jahan's Armory • Mughal Golden Age (c. 1640 CE)",
       desc: "A ceremonial dagger boasting a hilt carved from pristine white nephrite jade in the shape of a horse's head, intricately inlaid with gold wire, rubies, and emerald gems.",
-      metric: "Relic: Carved Nephrite Jade Khanjar"
+      metric: "Relic: Carved Nephrite Jade Khanjar",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Taj Mahal Charbagh Symmetrical Draft",
       subtitle: "Agra Archives • Mughal Imperial Garden Map",
       desc: "An ink-and-gilding architectural blueprint illustrating the four-fold Charbagh garden layouts of Agra, celebrating the Persian concepts of mathematical balance and symmetry.",
-      metric: "Design: Ink & Gold Symmetrical Scroll"
+      metric: "Design: Ink & Gold Symmetrical Scroll",
+      image: "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=600&auto=format&fit=crop"
     }
   ],
   maratha: [
@@ -534,19 +252,22 @@ const INDIAN_ARTIFACTS = {
       title: "Iron Bagh Nakh (Tiger Claws)",
       subtitle: "Pratapgad Armoury • Maratha Empire (c. 1659 CE)",
       desc: "The legendary concealed iron weapon used by Shivaji Maharaj during the historic duel against Afzal Khan. It consists of four curved steel claws attached to dual finger rings.",
-      metric: "Weaponry: Forged Iron Tiger Claws"
+      metric: "Weaponry: Forged Iron Tiger Claws",
+      image: "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Shivaji's Sacred Bhawani Sword",
       subtitle: "Raigad Vaults • Maratha Swarajya Crusade",
       desc: "A straight, single-edged high-carbon steel sword featuring an elaborate spiked handguard. Revered as the sword bestowed by Goddess Bhawani to carve out self-governance (Swarajya).",
-      metric: "Material: Tempered High-Carbon Steel"
+      metric: "Material: Tempered High-Carbon Steel",
+      image: "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Raigad Fort Impregnable Bastion",
       subtitle: "Deccan Highlands • Maratha Fortification Model",
       desc: "A stone scale-reconstruction of Raigad Fort's crowning gateway. Designed with massive semi-circular bastions to withstand heavy siege cannonades of Mughal armies.",
-      metric: "Model: Carved Basalt Fort Model"
+      metric: "Model: Carved Basalt Fort Model",
+      image: "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=600&auto=format&fit=crop"
     }
   ],
   battles: [
@@ -554,19 +275,22 @@ const INDIAN_ARTIFACTS = {
       title: "Battle of Haldighati (1576)",
       subtitle: "Aravalli Mountain Passes • Rajput vs Mughal",
       desc: "The historic clash between Maharana Pratap of Mewar and Akbar's imperial army. Highlights the sacrifice of the warhorse Chetak and the guerrilla defense of the mountain pass.",
-      metric: "Conflict: Mughal-Hindu Rajput Clash"
+      metric: "Conflict: Mughal-Hindu Rajput Clash",
+      image: "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Battle of Sinhagad (1570)",
       subtitle: "Deccan Cliffside • Maratha vs Mughal Garrison",
       desc: "A daring night raid led by Tanaji Malusare. Maratha warriors scaled a 300-meter vertical basalt cliff at Kondhana Fort to defeat the Mughal-allied garrison.",
-      metric: "Conflict: Mughal-Maratha Siege War"
+      metric: "Conflict: Mughal-Maratha Siege War",
+      image: "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=600&auto=format&fit=crop"
     },
     {
       title: "Treaty of Purandar (1665)",
       subtitle: "Purandar Fort • Mughal-Maratha Wars",
       desc: "The critical treaty signed between Shivaji Maharaj and Mughal general Jai Singh I, yielding 23 hill forts to the Mughals after a fierce siege, setting the stage for future Maratha reclamation.",
-      metric: "Treaty: Ink on Imperial Scroll"
+      metric: "Treaty: Ink on Imperial Scroll",
+      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"
     }
   ]
 };
@@ -740,402 +464,7 @@ const CuratorChatDrawer = ({ isOpen, onClose, prefill }) => {
   );
 };
 
-// --- SUB-COMPONENT: EXHIBIT DETAIL MODAL (VIDEOS & IMAGES PLAYER) ---
-const ExhibitDetailModal = ({ isOpen, onClose, exhibitId, setIsChatOpen, setChatPrefill }) => {
-  const [activeTab, setActiveTab] = useState('video');
-  const [currentImgIdx, setCurrentImgIdx] = useState(0);
-
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab('video');
-      setCurrentImgIdx(0);
-    }
-  }, [isOpen, exhibitId]);
-
-  if (!isOpen || !exhibitId) return null;
-
-  const data = EXHIBIT_MEDIA[exhibitId];
-  if (!data) return null;
-
-  const nextImage = () => {
-    setCurrentImgIdx(prev => (prev + 1) % data.images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImgIdx(prev => (prev - 1 + data.images.length) % data.images.length);
-  };
-
-  let activeBorder = "border-[#ff9933]";
-  let themeColorText = "text-[#ff9933]";
-  let themeColorBg = "bg-[#ff9933]";
-  
-  if (exhibitId === 'indus') {
-    activeBorder = "border-[#d9744b]";
-    themeColorText = "text-[#d9744b]";
-    themeColorBg = "bg-[#d9744b]";
-  } else if (exhibitId === 'vedic') {
-    activeBorder = "border-[#ffaa44]";
-    themeColorText = "text-[#ffaa44]";
-    themeColorBg = "bg-[#ffaa44]";
-  } else if (exhibitId === 'maurya') {
-    activeBorder = "border-[#e5b37a]";
-    themeColorText = "text-[#e5b37a]";
-    themeColorBg = "bg-[#e5b37a]";
-  } else if (exhibitId === 'gupta') {
-    activeBorder = "border-[#ffd700]";
-    themeColorText = "text-[#ffd700]";
-    themeColorBg = "bg-[#ffd700]";
-  } else if (exhibitId === 'chola') {
-    activeBorder = "border-[#38bdf8]";
-    themeColorText = "text-[#38bdf8]";
-    themeColorBg = "bg-[#38bdf8]";
-  } else if (exhibitId === 'hindu') {
-    activeBorder = "border-[#f97316]";
-    themeColorText = "text-[#f97316]";
-    themeColorBg = "bg-[#f97316]";
-  } else if (exhibitId === 'mughal') {
-    activeBorder = "border-[#10b981]";
-    themeColorText = "text-[#10b981]";
-    themeColorBg = "bg-[#10b981]";
-  } else if (exhibitId === 'maratha') {
-    activeBorder = "border-[#f43f5e]";
-    themeColorText = "text-[#f43f5e]";
-    themeColorBg = "bg-[#f43f5e]";
-  } else if (exhibitId === 'battles') {
-    activeBorder = "border-[#e11d48]";
-    themeColorText = "text-[#e11d48]";
-    themeColorBg = "bg-[#e11d48]";
-  }
-
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 md:p-10 overflow-y-auto">
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/85 backdrop-blur-xl z-0"
-        />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 30 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 30 }}
-          transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="relative w-full max-w-5xl bg-[#0f0c0b]/95 border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] z-10 flex flex-col lg:flex-row max-h-[90vh] lg:max-h-[80vh] backdrop-blur-2xl"
-        >
-          {/* Left Column: Media Player */}
-          <div className="flex-1 bg-black flex flex-col relative justify-center min-h-[300px] md:min-h-[400px]">
-            {activeTab === 'video' ? (
-              <div className="w-full h-full aspect-video lg:aspect-auto lg:h-full relative bg-black flex items-center justify-center">
-                <iframe
-                  src={data.videoUrl}
-                  title={data.title}
-                  className="w-full h-full border-0 absolute inset-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <div className="w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
-                <motion.img
-                  key={currentImgIdx}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4 }}
-                  src={data.images[currentImgIdx]}
-                  alt={`${data.title} Slide ${currentImgIdx + 1}`}
-                  className="w-full h-full object-contain max-h-[70vh]"
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-
-                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md border border-white/5 p-3 rounded-lg text-center">
-                  <p className="text-xs text-gray-300 font-sans leading-relaxed">
-                    {data.captions[currentImgIdx]}
-                  </p>
-                  <span className="text-[10px] font-mono text-gray-500 mt-1 block">
-                    Exhibit {currentImgIdx + 1} of {data.images.length}
-                  </span>
-                </div>
-
-                <button 
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer"
-                  aria-label="Previous image"
-                >
-                  &larr;
-                </button>
-                <button 
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer"
-                  aria-label="Next image"
-                >
-                  &rarr;
-                </button>
-              </div>
-            )}
-
-            <div className="absolute top-4 left-4 z-20 flex gap-2">
-              <button
-                onClick={() => setActiveTab('video')}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
-                  activeTab === 'video'
-                    ? `${themeColorBg} text-black border-[#fffaf0]/30 font-bold shadow-lg`
-                    : 'bg-black/65 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                }`}
-              >
-                🎥 Video Guide
-              </button>
-              <button
-                onClick={() => setActiveTab('gallery')}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
-                  activeTab === 'gallery'
-                    ? `${themeColorBg} text-black border-[#fffaf0]/30 font-bold shadow-lg`
-                    : 'bg-black/65 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                }`}
-              >
-                📷 Image Gallery
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column: Exhibit Details */}
-          <div className="w-full lg:w-[380px] p-6 md:p-8 flex flex-col gap-6 border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0e0c0b]/90 justify-between overflow-y-auto font-sans">
-            <div>
-              <div className="flex justify-between items-start gap-4">
-                <div>
-                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest block">Multimedia Exhibit</span>
-                  <h3 className="font-marcellus text-2xl text-[#f2e8d5] tracking-wide mt-1">
-                    {data.title}
-                  </h3>
-                </div>
-                <button 
-                  onClick={onClose} 
-                  className="p-1.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors cursor-pointer"
-                  aria-label="Close modal"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <p className="text-sm text-gray-400 leading-relaxed font-light mt-6">
-                {data.desc}
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3">
-                <span className={`text-[10px] font-mono uppercase tracking-wider ${themeColorText}`}>Multimedia Contents:</span>
-                <div className="flex items-center gap-2.5 text-xs text-gray-300 font-sans bg-white/[0.02] border border-white/5 rounded-lg p-3">
-                  <span>🎬</span>
-                  <span>1x Educational Documentary Video</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-xs text-gray-300 font-sans bg-white/[0.02] border border-white/5 rounded-lg p-3">
-                  <span>🖼️</span>
-                  <span>{data.images.length}x High-Resolution Gallery Slides</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-end border-t border-white/5 pt-6 mt-6 gap-3">
-              {exhibitId === 'scribe' && (
-                <p className="text-[10px] text-gray-500 font-mono text-center">
-                  💡 Type in Room X below to translate names.
-                </p>
-              )}
-              
-              <button
-                onClick={() => {
-                  setChatPrefill(`Could you explain the historical and philosophical context of: ${data.title}? I've just watched the educational video and browsed the gallery.`);
-                  setIsChatOpen(true);
-                  onClose();
-                }}
-                className={`w-full py-3 px-4 rounded-xl text-black text-xs font-mono font-bold tracking-widest uppercase hover:brightness-110 transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 ${themeColorBg}`}
-              >
-                <span>💬</span> Ask Curator AI
-              </button>
-
-              <button
-                onClick={onClose}
-                className="w-full py-3 px-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 text-gray-400 hover:text-white text-xs font-mono tracking-widest uppercase transition-all cursor-pointer text-center"
-              >
-                Close Gallery
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  );
-};
-
-// --- DATA: EXHIBIT MEDIA METADATA ---
-const EXHIBIT_MEDIA = {
-  indus: {
-    title: "Room I: Indus Valley Civilization",
-    desc: "Behold the brick grids and merchant trade seals of Harappa and Mohenjo-Daro, demonstrating civic engineering three millennia ago.",
-    videoUrl: "https://www.youtube.com/embed/n7ndRwqJYDM",
-    images: [
-      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Terracotta ruins and well planning in Harappan archeological excavations.",
-      "Lost-wax copper-bronze miniature sculpture of the Dancing Girl.",
-      "Soapstone carving detail depicting a Priest-King bearded portrait.",
-      "Monolithic structural grids and unified scales uncovered at Mohenjo-Daro."
-    ]
-  },
-  vedic: {
-    title: "Room II: Vedic Wisdom & Philosophy",
-    desc: "Delve into the sacred Sanskrit hymns, fire altar structures, and ancient acoustics that defined early Indian philosophy.",
-    videoUrl: "https://www.youtube.com/embed/zH8wBw5V1Ew",
-    images: [
-      "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Palm leaf transcription of Vedic Rigveda hymns in ancient Sanskrit.",
-      "The geometric layouts of fire altars defined in the Sulba Sutras.",
-      "Ancient Saraswati Veena details, representing music, art, and wisdom.",
-      "Vedic forest meditation settings where Upanishadic teachings were born."
-    ]
-  },
-  maurya: {
-    title: "Room III: Mauryan Edicts & Peace",
-    desc: "Examine the polished sandstone pillars erected by Emperor Ashoka, proclaiming Dhamma (moral law) across the empire.",
-    videoUrl: "https://www.youtube.com/embed/K836eB6n3eM",
-    images: [
-      "https://images.unsplash.com/photo-1600577916048-804c9191e36c?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1613143577717-a0f60baee436?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Four back-to-back Asiatic Lions capital carving at Sarnath.",
-      "Brahmi script inscriptions carved upon Ashokan stone pillars.",
-      "Mauryan punch-marked silver coins showing regional trade emblems.",
-      "Excavation sites at Pataliputra, the great capital of the Mauryan Empire."
-    ]
-  },
-  gupta: {
-    title: "Room IV: Gupta Science & Math",
-    desc: "Observe the inventions of zero, stellar calculations, and corrosion-resistant metal columns in India's Golden Age.",
-    videoUrl: "https://www.youtube.com/embed/aF3gA5tWnrs",
-    images: [
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1590736969955-71cc94801759?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Ancient observational instrumentation designs mapping lunar calculations.",
-      "The rust-resistant Iron Pillar of Delhi, an alloy marvel of Mehrauli.",
-      "Seated Buddha stone sculpture from the Sarnath Gupta artisan school.",
-      "Classical gold dinar coinage showing royal figures and deities."
-    ]
-  },
-  chola: {
-    title: "Room V: Chola Maritime Dynasty",
-    desc: "Explore the bronze casting masterpieces of Shiva Nataraja and the massive granite vimanas built by the Chola emperors.",
-    videoUrl: "https://www.youtube.com/embed/1vR_sO0kMog",
-    images: [
-      "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Bronze lost-wax casting of Lord Shiva in his Cosmic Dance layout.",
-      "The massive granite Brihadisvara Vimana tower at Thanjavur.",
-      "Bronze copper charters bound by tiger emblem rings of trade councils.",
-      "Intricate Dravidian stone carvings along South Indian temple base bands."
-    ]
-  },
-  hindu: {
-    title: "Room VI: Hindu & Vijayanagara Lineage",
-    desc: "Examine the majestic structures of Hampi, the double-edged Khanda swords, and the genealogies tracing back to the solar dynasties.",
-    videoUrl: "https://www.youtube.com/embed/1vR_sO0kMog",
-    images: [
-      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "The monolithic granite stone chariot of Vijayanagara at Hampi.",
-      "Rajput Wootz steel Khanda broadsword detailing the basket hilt.",
-      "Imperial solar dynasty charters outlining land grants and Mewar lineages."
-    ]
-  },
-  mughal: {
-    title: "Room VII: Mughal Dynasty & Art",
-    desc: "Examine the symmetrical garden grids, solid brass astrolabes, and the rubies inlaid into white jade daggers of the emperors.",
-    videoUrl: "https://www.youtube.com/embed/JSqS-S_g7zI",
-    images: [
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Solid brass octagonal astrolabe mappings designed in Fatehpur Sikri.",
-      "Ceremonial horse-head White Jade Khanjar belonging to Shah Jahan's vaults.",
-      "Architectural draft scrolls mapping the Charbagh garden layouts of Taj Mahal."
-    ]
-  },
-  maratha: {
-    title: "Room VIII: Maratha Swarajya & Forts",
-    desc: "Examine the iron tiger claws of Shivaji Maharaj, the sacred Bhawani swords, and the scale fort gateway models of Raigad.",
-    videoUrl: "https://www.youtube.com/embed/zH8wBw5V1Ew",
-    images: [
-      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Iron Tiger Claws (Bagh Nakh) used in the duel against Afzal Khan.",
-      "The high-carbon steel Bhawani Sword representing Maratha self-governance.",
-      "Scale model of Raigad Fort bastions overlooking the rugged Deccan gorges."
-    ]
-  },
-  battles: {
-    title: "Room IX: Clash of Empires",
-    desc: "Explore the battle records of Haldighati, the cliffside raid of Sinhagad, and the hand-written scrolls of the Treaty of Purandar.",
-    videoUrl: "https://www.youtube.com/embed/K836eB6n3eM",
-    images: [
-      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "War tactics at Haldighati pass detailing Chetak's charge.",
-      "Kondhana Fort cliff walls where Maratha soldiers scaled at night.",
-      "Historical Treaty of Purandar document scroll with imperial wax seals."
-    ]
-  },
-  scribe: {
-    title: "Room X: Sanskrit Scriptorium",
-    desc: "Discover Sanskrit, the sacred mathematical language. Sages mapped sounds to Devanagari symbols, representing keys of consciousness.",
-    videoUrl: "https://www.youtube.com/embed/JSqS-S_g7zI",
-    images: [
-      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=1200&auto=format&fit=crop"
-    ],
-    captions: [
-      "Vedic Devanagari script carved on temple sanctum architraves.",
-      "Palm leaf manuscripts recording grammar codes of Panini.",
-      "Sanskrit mantra inscriptions painted on early ritual copper plates.",
-      "Stone temples containing ancient library chambers of manuscript scribes."
-    ]
-  }
-};
-
-// --- MAIN PORTAL COMPONENT ---
+// --- MAIN PORTAL COMPONENT (DASHBOARD LAYOUT) ---
 export default function IndianCollection() {
   const [activeEra, setActiveEra] = useState('indus');
   const [nameInput, setNameInput] = useState("");
@@ -1152,6 +481,16 @@ export default function IndianCollection() {
   const audioCtxRef = useRef(null);
   const synthNodesRef = useRef([]);
   const mainGainNodeRef = useRef(null);
+
+  const handleSpeak = (text) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.85;
+      utterance.pitch = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   const toggleSoundscape = () => {
     if (isSounding) {
@@ -1807,23 +1146,41 @@ export default function IndianCollection() {
                   </div>
                 </motion.div>
               ) : (
-                /* Interactive 3D WebGL Curation Stage */
+                /* Dynamic Custom Cards grid with 3D Parallax Hover */
                 <motion.div
                   key={activeEra}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  className="w-full h-[460px] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.95)] bg-black/25 relative"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                 >
-                  <Indian3DStage 
-                    activeEra={activeEra}
-                    eraArtifacts={INDIAN_ARTIFACTS[activeEra]}
-                    accentColor={currentTheme.accent}
-                    onCardSelect={(art) => {
-                      setActiveExhibit(activeEra);
-                      setChatPrefill(`Tell me more details and historical context about: ${art.title}`);
-                    }}
-                  />
+                  {activeEra === 'indus' && INDIAN_ARTIFACTS.indus.map((art, idx) => (
+                    <IndusArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'vedic' && INDIAN_ARTIFACTS.vedic.map((art, idx) => (
+                    <VedicArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'maurya' && INDIAN_ARTIFACTS.maurya.map((art, idx) => (
+                    <MauryanArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'gupta' && INDIAN_ARTIFACTS.gupta.map((art, idx) => (
+                    <GuptaArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'chola' && INDIAN_ARTIFACTS.chola.map((art, idx) => (
+                    <CholaArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'hindu' && INDIAN_ARTIFACTS.hindu.map((art, idx) => (
+                    <HinduArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'mughal' && INDIAN_ARTIFACTS.mughal.map((art, idx) => (
+                    <MughalArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'maratha' && INDIAN_ARTIFACTS.maratha.map((art, idx) => (
+                    <MarathaArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
+                  {activeEra === 'battles' && INDIAN_ARTIFACTS.battles.map((art, idx) => (
+                    <BattlesArtifactCard key={idx} index={idx} artifact={art} handleSpeak={handleSpeak} setIsChatOpen={setIsChatOpen} setChatPrefill={setChatPrefill} />
+                  ))}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1850,3 +1207,1002 @@ export default function IndianCollection() {
     </main>
   );
 }
+
+// --- SUB-COMPONENT: ROOM I CARD (Harappan Terracotta Clay) ---
+const IndusArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, y: 35 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.5, delay: (index % 3) * 0.1 }}
+      whileHover={{ y: -8, borderColor: "#d9744b", boxShadow: "0 20px 40px rgba(0,0,0,0.7)" }}
+      className="bg-[#18110e] border border-[#d9744b]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden backdrop-blur-md shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute top-0 left-0 w-full h-1 bg-[#d9744b]/30" />
+      <div className="absolute right-4 top-4 text-xl font-mono text-[#d9744b]/5 select-none font-bold group-hover:text-[#d9744b]/10 transition-colors">
+        IVC-{String(index + 1).padStart(2, '0')}
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-lg border border-black/40 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 filter sepia-[0.35] contrast-[1.05] brightness-[0.8] group-hover:sepia-0 group-hover:brightness-95"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-75" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#d9744b] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-white font-bold tracking-wide mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-400 leading-relaxed font-light flex-1 font-sans" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#d9744b]/5 border border-[#d9744b]/10 rounded-lg px-3.5 py-2.5 flex items-center gap-2" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[10px] font-mono tracking-wider text-[#d9744b]">🏺 {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#d9744b] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Spoken Guide
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Tell me more details and historical context about: ${artifact.title} (${artifact.subtitle})`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#d9744b] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Ask Sages
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM II CARD (Vedic Palm Leaf Scroll) ---
+const VedicArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
+      whileHover={{ y: -6, borderColor: "#ffaa44", boxShadow: "0 0 30px rgba(255,170,68,0.12)" }}
+      className="bg-[#0b120d] border border-[#3e6b48]/30 rounded-[2rem] p-6 flex flex-col gap-4 relative overflow-hidden backdrop-blur-md shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-[#ffaa44]/[0.02] rounded-full blur-xl pointer-events-none" />
+      <div className="absolute left-4 top-4 text-2xl font-mono text-[#3e6b48]/10 select-none pointer-events-none">
+        ॐ
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-2xl border border-[#3e6b48]/20 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 filter brightness-[0.8] contrast-[1.05]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#3e6b48] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-[#f2e8d5] font-bold mt-2 italic">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-light flex-1 font-sans" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#3e6b48]/10 border border-[#3e6b48]/20 rounded-full px-4 py-1.5 flex items-center justify-center gap-2 self-start" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[9px] font-mono uppercase tracking-wider text-[#ffaa44]">🌿 {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#ffaa44] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Chant Guide
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Could you explain the spiritual and astronomical significance of: ${artifact.title}?`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#ffaa44] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Consult Sage
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM III CARD (Mauryan Sandstone Monolith) ---
+const MauryanArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
+      whileHover={{ scale: 1.02, borderColor: "#e5b37a", boxShadow: "0 25px 40px rgba(0,0,0,0.8)" }}
+      className="bg-[#1b1713] border-4 border-[#322a24] rounded-none p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute bottom-2 right-2 font-serif text-5xl text-[#e5b37a]/[0.01] select-none pointer-events-none">
+        𓋹
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden border-2 border-[#322a24] relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-103 filter contrast-[1.1] grayscale-[30%] brightness-[0.8]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#e5b37a] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-white font-black uppercase tracking-wider mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="border border-[#e5b37a]/30 rounded-none px-3.5 py-2 bg-[#e5b37a]/5" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[10px] font-mono tracking-wider text-[#e5b37a] font-bold uppercase font-sans">🏛️ {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-[#322a24] pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#e5b37a] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Monolith Edict
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`What was the social and moral decree behind: ${artifact.title}?`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#e5b37a] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Consult Scribe
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM IV CARD (Gupta Observatory Glass) ---
+const GuptaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
+      whileHover={{ y: -10, borderColor: "#ffd700", boxShadow: "0 0 35px rgba(255,215,0,0.12)" }}
+      className="bg-[#080918]/50 border border-[#ffd700]/15 backdrop-blur-xl rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute -right-8 -top-8 w-24 h-24 border border-white/5 rounded-full pointer-events-none group-hover:border-[#ffd700]/10 transition-colors" />
+      <div className="absolute right-4 top-4 text-xs font-mono text-[#818cf8]/20 select-none">
+        ☀
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-white/10 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 filter brightness-[0.8] saturate-[0.85]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080918] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#818cf8] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-[#ffd700] font-medium tracking-wide mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-sans font-light flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#818cf8]/10 border border-[#818cf8]/20 rounded-md px-3 py-2 flex items-center gap-2" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[10px] font-mono tracking-wider text-[#ffd700]">✦ {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#ffd700] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Stellar Audio
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`What mathematical or scientific principles are showcased in: ${artifact.title}?`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#ffd700] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Ask Astronomer
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM V CARD (Chola Maritime Waves Sway) ---
+const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6 }}
+      animate={{ y: [0, -6, 0] }}
+      style={{ perspective: 1000 }}
+      whileHover={{ scale: 1.03, borderColor: "#38bdf8", boxShadow: "0 20px 45px rgba(56,189,248,0.15)" }}
+      className="bg-[#071012] border-2 border-slate-800 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-500 group"
+    >
+      <div className="absolute top-1 left-1 right-1 h-[2px] bg-slate-700/50" />
+      <div className="absolute right-4 top-4 text-2xl font-mono text-[#38bdf8]/5 select-none pointer-events-none">
+        ⚓
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded border border-slate-800 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 filter contrast-[1.1] brightness-[0.8]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#071012] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#38bdf8] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-[#f2e8d5] font-bold mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-400 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#38bdf8]/5 border border-[#38bdf8]/15 rounded px-3 py-2" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[10px] font-mono tracking-wider text-[#38bdf8] font-bold uppercase">🔱 {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-slate-800 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#38bdf8] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Temple Guide
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Could you explain the maritime influence or dravidian engineering of: ${artifact.title}?`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#38bdf8] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Inquire Dynasty
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM VI CARD (Hindu Throne of Dharma) ---
+const HinduArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 150, damping: 15, delay: (index % 3) * 0.1 }}
+      whileHover={{ y: -8, borderColor: "#f97316", boxShadow: "0 20px 45px rgba(249,115,22,0.18)" }}
+      className="bg-[#120703] border border-[#f97316]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#ff9933] to-[#ffaa44]" />
+      <div className="absolute right-4 top-4 text-3xl font-mono text-[#f97316]/5 select-none pointer-events-none">
+        ॐ
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f97316]/10 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 filter brightness-[0.75]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#120703] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#f97316] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-white font-bold mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#f97316]/5 border border-[#f97316]/15 rounded-xl px-3 py-2 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[9px] font-mono tracking-wider text-[#f97316] font-bold">🏹 {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#f97316] transition-colors cursor-pointer"
+          title="Play audio recitation"
+        >
+          <Volume2 size={12} /> Dharma Recite
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Detail the lineage, history, and spiritual background of: ${artifact.title}`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#f97316] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Consult Royal
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM VII CARD (Mughal Symmetrical Gardens) ---
+const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ scale: 0.85, opacity: 0 }}
+      whileInView={{ scale: 1, opacity: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.5, ease: "easeOut", delay: (index % 3) * 0.1 }}
+      whileHover={{ scale: 1.02, borderColor: "#10b981", boxShadow: "0 25px 45px rgba(16,185,129,0.18)" }}
+      className="bg-[#020e08] border border-[#10b981]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-500 group"
+    >
+      <div className="absolute top-2 left-2 right-2 bottom-2 border border-dashed border-[#10b981]/5 rounded-xl pointer-events-none group-hover:border-[#10b981]/15 transition-colors" />
+      <div className="absolute right-4 top-4 text-2xl font-mono text-[#10b981]/5 select-none pointer-events-none">
+        ☪
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#10b981]/15 relative mb-2 shadow-inner" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-103 filter brightness-[0.7] contrast-[1.05]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020e08] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1 z-10" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#10b981] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-white font-bold mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1 z-10" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#10b981]/5 border border-[#10b981]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center z-10" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[9px] font-mono tracking-wider text-[#10b981] font-bold">🕌 {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2 z-10" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#10b981] transition-colors cursor-pointer"
+          title="Play spoken narration"
+        >
+          <Volume2 size={12} /> Court Clerk
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Explain the design, Persian architectural roots, or royal decree of: ${artifact.title}`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#10b981] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Consult Scriptor
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM VIII CARD (Maratha Swarajya Spring Ambush) ---
+const MarathaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ x: index % 2 === 0 ? -120 : 120, opacity: 0 }}
+      whileInView={{ x: 0, opacity: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 220, damping: 14, delay: (index % 3) * 0.05 }}
+      whileHover={{ scale: 1.03, borderColor: "#f43f5e", boxShadow: "0 20px 45px rgba(244,63,94,0.18)" }}
+      className="bg-[#0f0305] border border-[#f43f5e]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute top-0 left-0 w-[3px] h-full bg-[#f43f5e]/30" />
+      <div className="absolute right-4 top-4 text-3xl font-mono text-[#f43f5e]/5 select-none pointer-events-none">
+        🚩
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#f43f5e]/15 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 filter brightness-[0.7]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0f0305] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#f43f5e] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-white font-bold mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#f43f5e]/5 border border-[#f43f5e]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[9px] font-mono tracking-wider text-[#f43f5e] font-bold">🛡️ {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#f43f5e] transition-colors cursor-pointer"
+          title="Play narration"
+        >
+          <Volume2 size={12} /> Mavala Guide
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Tell me about Shivaji Maharaj's tactics and context for: ${artifact.title}`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#f43f5e] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Ask Mavala
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- SUB-COMPONENT: ROOM IX CARD (Clash of Empires Spring Clash) ---
+const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setChatPrefill }) => {
+  return (
+    <TiltCard 
+      initial={{ y: index % 2 === 0 ? -120 : 120, opacity: 0, rotate: index % 2 === 0 ? -8 : 8 }}
+      whileInView={{ y: 0, opacity: 1, rotate: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ type: "spring", stiffness: 180, damping: 13, delay: (index % 3) * 0.08 }}
+      whileHover={{ scale: 1.02, borderColor: "#e11d48", boxShadow: "0 25px 45px rgba(225,29,72,0.18)" }}
+      className="bg-[#0e0204] border border-[#e11d48]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
+    >
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#e11d48]/[0.02] to-transparent pointer-events-none" />
+      <div className="absolute right-4 top-4 text-3xl font-mono text-[#e11d48]/5 select-none pointer-events-none">
+        ⚔
+      </div>
+
+      {artifact.image && (
+        <div className="w-full h-44 overflow-hidden rounded-xl border border-[#e11d48]/15 relative mb-2" style={{ transform: "translateZ(25px)" }}>
+          <img 
+            src={artifact.image} 
+            alt={artifact.title} 
+            className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105 filter brightness-[0.65] contrast-[1.05]"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0e0204] via-transparent to-transparent" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1" style={{ transform: "translateZ(30px)" }}>
+        <span className="text-[#e11d48] font-mono text-[9px] tracking-widest uppercase border-b border-white/5 pb-2">
+          {artifact.subtitle}
+        </span>
+        <h3 className="font-marcellus text-lg text-[#fffaf0] font-black uppercase tracking-wide mt-2">
+          {artifact.title}
+        </h3>
+      </div>
+
+      <p className="text-xs text-gray-300 leading-relaxed font-sans flex-1" style={{ transform: "translateZ(15px)" }}>
+        {artifact.desc}
+      </p>
+
+      <div className="bg-[#e11d48]/5 border border-[#e11d48]/15 rounded-md px-3.5 py-1.5 flex items-center justify-center" style={{ transform: "translateZ(20px)" }}>
+        <span className="text-[9px] font-mono tracking-wider text-[#e11d48] font-bold">⚔️ {artifact.metric}</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2" style={{ transform: "translateZ(10px)" }}>
+        <button 
+          onClick={() => handleSpeak(artifact.desc)}
+          className="flex items-center gap-1.5 text-[10px] font-mono text-gray-500 hover:text-[#e11d48] transition-colors cursor-pointer"
+          title="Play narration"
+        >
+          <Volume2 size={12} /> Battle Record
+        </button>
+        <button 
+          onClick={() => {
+            setChatPrefill(`Provide a detailed analysis of the strategies, troop formations, and outcomes of: ${artifact.title}`);
+            setIsChatOpen(true);
+          }}
+          className="flex items-center gap-1 text-[10px] font-mono text-[#e11d48] hover:text-white transition-colors cursor-pointer"
+        >
+          <Info size={10} /> Consult Scholar
+        </button>
+      </div>
+    </TiltCard>
+  );
+};
+
+// --- DATA: EXHIBIT MEDIA METADATA ---
+const EXHIBIT_MEDIA = {
+  indus: {
+    title: "Room I: Indus Valley Civilization",
+    desc: "Behold the brick grids and merchant trade seals of Harappa and Mohenjo-Daro, demonstrating civic engineering three millennia ago.",
+    videoUrl: "https://www.youtube.com/embed/n7ndRwqJYDM",
+    images: [
+      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Terracotta ruins and well planning in Harappan archeological excavations.",
+      "Lost-wax copper-bronze miniature sculpture of the Dancing Girl.",
+      "Soapstone carving detail depicting a Priest-King bearded portrait.",
+      "Monolithic structural grids and unified scales uncovered at Mohenjo-Daro."
+    ]
+  },
+  vedic: {
+    title: "Room II: Vedic Wisdom & Philosophy",
+    desc: "Delve into the sacred Sanskrit hymns, fire altar structures, and ancient acoustics that defined early Indian philosophy.",
+    videoUrl: "https://www.youtube.com/embed/zH8wBw5V1Ew",
+    images: [
+      "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Palm leaf transcription of Vedic Rigveda hymns in ancient Sanskrit.",
+      "The geometric layouts of fire altars defined in the Sulba Sutras.",
+      "Ancient Saraswati Veena details, representing music, art, and wisdom.",
+      "Vedic forest meditation settings where Upanishadic teachings were born."
+    ]
+  },
+  maurya: {
+    title: "Room III: Mauryan Edicts & Peace",
+    desc: "Examine the polished sandstone pillars erected by Emperor Ashoka, proclaiming Dhamma (moral law) across the empire.",
+    videoUrl: "https://www.youtube.com/embed/K836eB6n3eM",
+    images: [
+      "https://images.unsplash.com/photo-1600577916048-804c9191e36c?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1613143577717-a0f60baee436?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Four back-to-back Asiatic Lions capital carving at Sarnath.",
+      "Brahmi script inscriptions carved upon Ashokan stone pillars.",
+      "Mauryan punch-marked silver coins showing regional trade emblems.",
+      "Excavation sites at Pataliputra, the great capital of the Mauryan Empire."
+    ]
+  },
+  gupta: {
+    title: "Room IV: Gupta Science & Math",
+    desc: "Observe the inventions of zero, stellar calculations, and corrosion-resistant metal columns in India's Golden Age.",
+    videoUrl: "https://www.youtube.com/embed/aF3gA5tWnrs",
+    images: [
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1590736969955-71cc94801759?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Ancient observational instrumentation designs mapping lunar calculations.",
+      "The rust-resistant Iron Pillar of Delhi, an alloy marvel of Mehrauli.",
+      "Seated Buddha stone sculpture from the Sarnath Gupta artisan school.",
+      "Classical gold dinar coinage showing royal figures and deities."
+    ]
+  },
+  chola: {
+    title: "Room V: Chola Maritime Dynasty",
+    desc: "Explore the bronze casting masterpieces of Shiva Nataraja and the massive granite vimanas built by the Chola emperors.",
+    videoUrl: "https://www.youtube.com/embed/1vR_sO0kMog",
+    images: [
+      "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Bronze lost-wax casting of Lord Shiva in his Cosmic Dance layout.",
+      "The massive granite Brihadisvara Vimana tower at Thanjavur.",
+      "Bronze copper charters bound by tiger emblem rings of trade councils.",
+      "Intricate Dravidian stone carvings along South Indian temple base bands."
+    ]
+  },
+  hindu: {
+    title: "Room VI: Hindu & Vijayanagara Lineage",
+    desc: "Examine the majestic structures of Hampi, the double-edged Khanda swords, and the genealogies tracing back to the solar dynasties.",
+    videoUrl: "https://www.youtube.com/embed/1vR_sO0kMog",
+    images: [
+      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "The monolithic granite stone chariot of Vijayanagara at Hampi.",
+      "Rajput Wootz steel Khanda broadsword detailing the basket hilt.",
+      "Imperial solar dynasty charters outlining land grants and Mewar lineages."
+    ]
+  },
+  mughal: {
+    title: "Room VII: Mughal Dynasty & Art",
+    desc: "Examine the symmetrical garden grids, solid brass astrolabes, and the rubies inlaid into white jade daggers of the emperors.",
+    videoUrl: "https://www.youtube.com/embed/JSqS-S_g7zI",
+    images: [
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Solid brass octagonal astrolabe mappings designed in Fatehpur Sikri.",
+      "Ceremonial horse-head White Jade Khanjar belonging to Shah Jahan's vaults.",
+      "Architectural draft scrolls mapping the Charbagh garden layouts of Taj Mahal."
+    ]
+  },
+  maratha: {
+    title: "Room VIII: Maratha Swarajya & Forts",
+    desc: "Examine the iron tiger claws of Shivaji Maharaj, the sacred Bhawani swords, and the scale fort gateway models of Raigad.",
+    videoUrl: "https://www.youtube.com/embed/zH8wBw5V1Ew",
+    images: [
+      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Iron Tiger Claws (Bagh Nakh) used in the duel against Afzal Khan.",
+      "The high-carbon steel Bhawani Sword representing Maratha self-governance.",
+      "Scale model of Raigad Fort bastions overlooking the rugged Deccan gorges."
+    ]
+  },
+  battles: {
+    title: "Room IX: Clash of Empires",
+    desc: "Explore the battle records of Haldighati, the cliffside raid of Sinhagad, and the hand-written scrolls of the Treaty of Purandar.",
+    videoUrl: "https://www.youtube.com/embed/K836eB6n3eM",
+    images: [
+      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "War tactics at Haldighati pass detailing Chetak's charge.",
+      "Kondhana Fort cliff walls where Maratha soldiers scaled at night.",
+      "Historical Treaty of Purandar document scroll with imperial wax seals."
+    ]
+  },
+  scribe: {
+    title: "Room X: Sanskrit Scriptorium",
+    desc: "Discover Sanskrit, the sacred mathematical language. Sages mapped sounds to Devanagari symbols, representing keys of consciousness.",
+    videoUrl: "https://www.youtube.com/embed/JSqS-S_g7zI",
+    images: [
+      "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=1200&auto=format&fit=crop"
+    ],
+    captions: [
+      "Vedic Devanagari script carved on temple sanctum architraves.",
+      "Palm leaf manuscripts recording grammar codes of Panini.",
+      "Sanskrit mantra inscriptions painted on early ritual copper plates.",
+      "Stone temples containing ancient library chambers of manuscript scribes."
+    ]
+  }
+};
+
+// --- SUB-COMPONENT: EXHIBIT DETAIL MODAL (VIDEOS & IMAGES PLAYER) ---
+const ExhibitDetailModal = ({ isOpen, onClose, exhibitId, setIsChatOpen, setChatPrefill }) => {
+  const [activeTab, setActiveTab] = useState('video');
+  const [currentImgIdx, setCurrentImgIdx] = useState(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('video');
+      setCurrentImgIdx(0);
+    }
+  }, [isOpen, exhibitId]);
+
+  if (!isOpen || !exhibitId) return null;
+
+  const data = EXHIBIT_MEDIA[exhibitId];
+  if (!data) return null;
+
+  const nextImage = () => {
+    setCurrentImgIdx(prev => (prev + 1) % data.images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImgIdx(prev => (prev - 1 + data.images.length) % data.images.length);
+  };
+
+  let activeBorder = "border-[#ff9933]";
+  let themeColorText = "text-[#ff9933]";
+  let themeColorBg = "bg-[#ff9933]";
+  
+  if (exhibitId === 'indus') {
+    activeBorder = "border-[#d9744b]";
+    themeColorText = "text-[#d9744b]";
+    themeColorBg = "bg-[#d9744b]";
+  } else if (exhibitId === 'vedic') {
+    activeBorder = "border-[#ffaa44]";
+    themeColorText = "text-[#ffaa44]";
+    themeColorBg = "bg-[#ffaa44]";
+  } else if (exhibitId === 'maurya') {
+    activeBorder = "border-[#e5b37a]";
+    themeColorText = "text-[#e5b37a]";
+    themeColorBg = "bg-[#e5b37a]";
+  } else if (exhibitId === 'gupta') {
+    activeBorder = "border-[#ffd700]";
+    themeColorText = "text-[#ffd700]";
+    themeColorBg = "bg-[#ffd700]";
+  } else if (exhibitId === 'chola') {
+    activeBorder = "border-[#38bdf8]";
+    themeColorText = "text-[#38bdf8]";
+    themeColorBg = "bg-[#38bdf8]";
+  } else if (exhibitId === 'hindu') {
+    activeBorder = "border-[#f97316]";
+    themeColorText = "text-[#f97316]";
+    themeColorBg = "bg-[#f97316]";
+  } else if (exhibitId === 'mughal') {
+    activeBorder = "border-[#10b981]";
+    themeColorText = "text-[#10b981]";
+    themeColorBg = "bg-[#10b981]";
+  } else if (exhibitId === 'maratha') {
+    activeBorder = "border-[#f43f5e]";
+    themeColorText = "text-[#f43f5e]";
+    themeColorBg = "bg-[#f43f5e]";
+  } else if (exhibitId === 'battles') {
+    activeBorder = "border-[#e11d48]";
+    themeColorText = "text-[#e11d48]";
+    themeColorBg = "bg-[#e11d48]";
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 md:p-10 overflow-y-auto">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/85 backdrop-blur-xl z-0"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 30 }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          className="relative w-full max-w-5xl bg-[#0f0c0b]/95 border border-white/10 rounded-3xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.95)] z-10 flex flex-col lg:flex-row max-h-[90vh] lg:max-h-[80vh] backdrop-blur-2xl"
+        >
+          {/* Left Column: Media Player */}
+          <div className="flex-1 bg-black flex flex-col relative justify-center min-h-[300px] md:min-h-[400px]">
+            {activeTab === 'video' ? (
+              <div className="w-full h-full aspect-video lg:aspect-auto lg:h-full relative bg-black flex items-center justify-center">
+                <iframe
+                  src={data.videoUrl}
+                  title={data.title}
+                  className="w-full h-full border-0 absolute inset-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="w-full h-full relative bg-black flex items-center justify-center overflow-hidden">
+                <motion.img
+                  key={currentImgIdx}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  src={data.images[currentImgIdx]}
+                  alt={`${data.title} Slide ${currentImgIdx + 1}`}
+                  className="w-full h-full object-contain max-h-[70vh]"
+                />
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+                <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md border border-white/5 p-3 rounded-lg text-center">
+                  <p className="text-xs text-gray-300 font-sans leading-relaxed">
+                    {data.captions[currentImgIdx]}
+                  </p>
+                  <span className="text-[10px] font-mono text-gray-500 mt-1 block">
+                    Exhibit {currentImgIdx + 1} of {data.images.length}
+                  </span>
+                </div>
+
+                <button 
+                  onClick={prevImage}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer"
+                  aria-label="Previous image"
+                >
+                  &larr;
+                </button>
+                <button 
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 text-white flex items-center justify-center hover:bg-white hover:text-black transition-all cursor-pointer"
+                  aria-label="Next image"
+                >
+                  &rarr;
+                </button>
+              </div>
+            )}
+
+            <div className="absolute top-4 left-4 z-20 flex gap-2">
+              <button
+                onClick={() => setActiveTab('video')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+                  activeTab === 'video'
+                    ? `${themeColorBg} text-black border-[#fffaf0]/30 font-bold shadow-lg`
+                    : 'bg-black/65 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                }`}
+              >
+                🎥 Video Guide
+              </button>
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-mono tracking-wider uppercase border transition-all cursor-pointer ${
+                  activeTab === 'gallery'
+                    ? `${themeColorBg} text-black border-[#fffaf0]/30 font-bold shadow-lg`
+                    : 'bg-black/65 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                }`}
+              >
+                📷 Image Gallery
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Exhibit Details */}
+          <div className="w-full lg:w-[380px] p-6 md:p-8 flex flex-col gap-6 border-t lg:border-t-0 lg:border-l border-white/10 bg-[#0e0c0b]/90 justify-between overflow-y-auto font-sans">
+            <div>
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest block">Multimedia Exhibit</span>
+                  <h3 className="font-marcellus text-2xl text-[#f2e8d5] tracking-wide mt-1">
+                    {data.title}
+                  </h3>
+                </div>
+                <button 
+                  onClick={onClose} 
+                  className="p-1.5 rounded-full border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-400 leading-relaxed font-light mt-6">
+                {data.desc}
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3">
+                <span className={`text-[10px] font-mono uppercase tracking-wider ${themeColorText}`}>Multimedia Contents:</span>
+                <div className="flex items-center gap-2.5 text-xs text-gray-300 font-sans bg-white/[0.02] border border-white/5 rounded-lg p-3">
+                  <span>🎬</span>
+                  <span>1x Educational Documentary Video</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-gray-300 font-sans bg-white/[0.02] border border-white/5 rounded-lg p-3">
+                  <span>🖼️</span>
+                  <span>{data.images.length}x High-Resolution Gallery Slides</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-end border-t border-white/5 pt-6 mt-6 gap-3">
+              {exhibitId === 'scribe' && (
+                <p className="text-[10px] text-gray-500 font-mono text-center">
+                  💡 Type in Room X below to translate names.
+                </p>
+              )}
+              
+              <button
+                onClick={() => {
+                  setChatPrefill(`Could you explain the historical and philosophical context of: ${data.title}? I've just watched the educational video and browsed the gallery.`);
+                  setIsChatOpen(true);
+                  onClose();
+                }}
+                className={`w-full py-3 px-4 rounded-xl text-black text-xs font-mono font-bold tracking-widest uppercase hover:brightness-110 transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 ${themeColorBg}`}
+              >
+                <span>💬</span> Ask Curator AI
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full py-3 px-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 text-gray-400 hover:text-white text-xs font-mono tracking-widest uppercase transition-all cursor-pointer text-center"
+              >
+                Close Gallery
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
