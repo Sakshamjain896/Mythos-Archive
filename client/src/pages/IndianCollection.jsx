@@ -5,6 +5,8 @@ import {
   HelpCircle, Sparkles, Compass, Award, Anchor, Sun, Flame, Shield, BookOpen, Music, VolumeX
 } from 'lucide-react';
 import { useNavigationStore } from '../store/navigationStore';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PresentationControls, Sparkles as SparklesDrei } from '@react-three/drei';
 
 // --- SANSKRIT DICTIONARY & MAP ---
 const LETTER_TO_SANSKRIT = {
@@ -34,6 +36,424 @@ const LETTER_TO_SANSKRIT = {
   X: { char: "क्ष", name: "Kshama (Mercy)" },
   Y: { char: "य", name: "Yoga (Union)" },
   Z: { char: "झ", name: "Jyoti (Light)" }
+};
+
+// --- PROCEDURAL 3D MESH SUBCOMPONENTS ---
+function IndusSealMesh() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.25;
+      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
+    }
+  });
+  return (
+    <group ref={groupRef}>
+      {/* Terracotta seal base */}
+      <mesh>
+        <boxGeometry args={[1.1, 1.1, 0.2]} />
+        <meshStandardMaterial color="#a0522d" roughness={0.9} />
+      </mesh>
+      {/* Inset border */}
+      <mesh position={[0, 0, 0.11]}>
+        <boxGeometry args={[0.9, 0.9, 0.02]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.8} />
+      </mesh>
+      {/* Priest-king crown outline representation */}
+      <mesh position={[0, 0.15, 0.125]}>
+        <coneGeometry args={[0.18, 0.25, 4]} />
+        <meshStandardMaterial color="#d2b48c" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, -0.15, 0.125]}>
+        <cylinderGeometry args={[0.15, 0.15, 0.2, 8]} />
+        <meshStandardMaterial color="#d2b48c" roughness={0.8} />
+      </mesh>
+      <SparklesDrei count={15} scale={1} size={2.5} color="#d9744b" />
+    </group>
+  );
+}
+
+function VedicAltarMesh() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
+    }
+  });
+  return (
+    <group ref={groupRef} position={[0, -0.4, 0]}>
+      {/* Tiered fire altar */}
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[1.5, 0.2, 1.5]} />
+        <meshStandardMaterial color="#3a2f28" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.3, 0]}>
+        <boxGeometry args={[1.1, 0.2, 1.1]} />
+        <meshStandardMaterial color="#4a3e35" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]}>
+        <boxGeometry args={[0.7, 0.2, 0.7]} />
+        <meshStandardMaterial color="#5a4d42" roughness={0.8} />
+      </mesh>
+      
+      {/* Floating fire particles */}
+      <SparklesDrei count={35} scale={0.7} size={4.5} speed={1.5} color="#ff9933" />
+      <pointLight position={[0, 0.7, 0]} color="#ff7700" intensity={2} distance={3} />
+    </group>
+  );
+}
+
+function MauryaColumnMesh() {
+  const wheelRef = useRef();
+  useFrame((state) => {
+    if (wheelRef.current) {
+      wheelRef.current.rotation.z = state.clock.elapsedTime * 0.3;
+    }
+  });
+  return (
+    <group position={[0, -0.3, 0]}>
+      {/* Column shaft */}
+      <mesh position={[0, -0.3, 0]}>
+        <cylinderGeometry args={[0.22, 0.22, 0.7, 16]} />
+        <meshStandardMaterial color="#e5b37a" roughness={0.6} />
+      </mesh>
+      {/* Inverted lotus base */}
+      <mesh position={[0, 0.15, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.3, 0.2, 16]} />
+        <meshStandardMaterial color="#d4a36a" roughness={0.7} />
+      </mesh>
+      {/* Ashoka Chakra Wheel */}
+      <mesh ref={wheelRef} position={[0, 0.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.38, 0.38, 0.08, 24]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <SparklesDrei count={15} scale={0.8} size={3} color="#e5b37a" />
+    </group>
+  );
+}
+
+function GuptaAstrolabeMesh() {
+  const ring1 = useRef();
+  const ring2 = useRef();
+  const ring3 = useRef();
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (ring1.current) ring1.current.rotation.x = t * 0.45;
+    if (ring2.current) ring2.current.rotation.y = t * 0.35;
+    if (ring3.current) ring3.current.rotation.z = t * 0.55;
+  });
+  return (
+    <group>
+      <mesh ref={ring1}>
+        <torusGeometry args={[0.85, 0.035, 8, 48]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh ref={ring2}>
+        <torusGeometry args={[0.7, 0.035, 8, 48]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh ref={ring3}>
+        <torusGeometry args={[0.55, 0.035, 8, 48]} />
+        <meshStandardMaterial color="#c0c0c0" metalness={0.8} roughness={0.2} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshStandardMaterial color="#ffd700" emissive="#ffaa00" emissiveIntensity={0.6} />
+      </mesh>
+      <pointLight color="#ffd700" intensity={2} distance={2.5} />
+    </group>
+  );
+}
+
+function CholaNatarajaMesh() {
+  const ringRef = useRef();
+  useFrame((state) => {
+    if (ringRef.current) {
+      ringRef.current.rotation.z = state.clock.elapsedTime * 0.2;
+    }
+  });
+  return (
+    <group>
+      <group ref={ringRef}>
+        <mesh>
+          <torusGeometry args={[0.8, 0.05, 8, 64]} />
+          <meshStandardMaterial color="#cd7f32" metalness={0.8} roughness={0.25} />
+        </mesh>
+        {[...Array(12)].map((_, i) => {
+          const angle = (i * 30 * Math.PI) / 180;
+          const x = 0.8 * Math.sin(angle);
+          const y = 0.8 * Math.cos(angle);
+          return (
+            <mesh key={i} position={[x, y, 0]} rotation={[0, 0, -angle]}>
+              <coneGeometry args={[0.06, 0.15, 4]} />
+              <meshStandardMaterial color="#ff5500" emissive="#ff1100" emissiveIntensity={0.7} />
+            </mesh>
+          );
+        })}
+      </group>
+      {/* Statuesque pillar silhouette in core */}
+      <mesh position={[0, -0.1, 0]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.6, 8]} />
+        <meshStandardMaterial color="#cd7f32" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <mesh position={[0, 0.22, 0]}>
+        <sphereGeometry args={[0.07, 12, 12]} />
+        <meshStandardMaterial color="#cd7f32" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <SparklesDrei count={20} scale={0.9} size={3} color="#cd7f32" />
+    </group>
+  );
+}
+
+function HinduGopuramMesh() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.15;
+    }
+  });
+  return (
+    <group ref={groupRef} position={[0, -0.4, 0]}>
+      {/* Granite layers */}
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[1.2, 0.18, 1.2]} />
+        <meshStandardMaterial color="#b25316" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.28, 0]}>
+        <boxGeometry args={[0.9, 0.18, 0.9]} />
+        <meshStandardMaterial color="#b25316" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.46, 0]}>
+        <boxGeometry args={[0.6, 0.18, 0.6]} />
+        <meshStandardMaterial color="#b25316" roughness={0.85} />
+      </mesh>
+      {/* Golden spire */}
+      <mesh position={[0, 0.65, 0]}>
+        <sphereGeometry args={[0.15, 16, 16]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <mesh position={[0, 0.8, 0]}>
+        <coneGeometry args={[0.06, 0.2, 8]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.9} roughness={0.1} />
+      </mesh>
+      <pointLight position={[0, 0.65, 0]} color="#f97316" intensity={2} distance={3} />
+    </group>
+  );
+}
+
+function MughalDomeMesh() {
+  const groupRef = useRef();
+  useFrame((state) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.12;
+    }
+  });
+  return (
+    <group ref={groupRef} position={[0, -0.3, 0]}>
+      {/* Plinth */}
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.75, 0.75, 0.12, 8]} />
+        <meshStandardMaterial color="#fffaf0" roughness={0.4} />
+      </mesh>
+      {/* Main Dome shape */}
+      <mesh position={[0, 0.4, 0]}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color="#fffaf0" roughness={0.25} />
+      </mesh>
+      {/* Top spire */}
+      <mesh position={[0, 0.92, 0]}>
+        <coneGeometry args={[0.045, 0.25, 8]} />
+        <meshStandardMaterial color="#ffd700" metalness={0.8} />
+      </mesh>
+      {/* Symmetrical Emerald wireframe overlay */}
+      <mesh position={[0, 0.4, 0]}>
+        <sphereGeometry args={[0.52, 12, 12]} />
+        <meshBasicMaterial color="#10b981" wireframe />
+      </mesh>
+      <pointLight position={[0, 0.4, 0]} color="#10b981" intensity={2} distance={2.5} />
+    </group>
+  );
+}
+
+function MarathaFortMesh() {
+  const flagRef = useRef();
+  useFrame((state) => {
+    if (flagRef.current) {
+      flagRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 5) * 0.15;
+    }
+  });
+  return (
+    <group position={[0, -0.4, 0]}>
+      {/* Impregnable basalt hill */}
+      <mesh>
+        <coneGeometry args={[0.85, 0.75, 5]} />
+        <meshStandardMaterial color="#2d2d2d" roughness={0.9} />
+      </mesh>
+      {/* Flag post */}
+      <mesh position={[0.15, 0.65, 0]}>
+        <cylinderGeometry args={[0.012, 0.012, 0.9, 8]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.6} />
+      </mesh>
+      {/* Bhagwa Saffron Flag */}
+      <mesh ref={flagRef} position={[0.3, 0.9, 0]}>
+        <boxGeometry args={[0.3, 0.15, 0.01]} />
+        <meshStandardMaterial color="#f43f5e" roughness={0.8} />
+      </mesh>
+      <SparklesDrei count={15} scale={0.85} size={3} color="#f43f5e" />
+    </group>
+  );
+}
+
+function BattlesClashMesh() {
+  const sword1 = useRef();
+  const sword2 = useRef();
+  useFrame((state) => {
+    const angle = Math.sin(state.clock.elapsedTime * 6) * 0.15;
+    if (sword1.current) sword1.current.rotation.z = -Math.PI / 4 + angle;
+    if (sword2.current) sword2.current.rotation.z = Math.PI / 4 - angle;
+  });
+  return (
+    <group>
+      {/* Rajput Talwar */}
+      <group ref={sword1} position={[-0.25, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
+        <mesh position={[0, 0.35, 0]}>
+          <boxGeometry args={[0.035, 0.8, 0.015]} />
+          <meshStandardMaterial color="#b0b0b0" metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.18, 0.035, 0.035]} />
+          <meshStandardMaterial color="#ffd700" metalness={0.8} />
+        </mesh>
+      </group>
+
+      {/* Mughal Khanda */}
+      <group ref={sword2} position={[0.25, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
+        <mesh position={[0, 0.35, 0]}>
+          <boxGeometry args={[0.035, 0.8, 0.015]} />
+          <meshStandardMaterial color="#b0b0b0" metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.18, 0.035, 0.035]} />
+          <meshStandardMaterial color="#ffd700" metalness={0.8} />
+        </mesh>
+      </group>
+
+      {/* Clashing Sparks */}
+      <SparklesDrei count={35} scale={0.35} size={5.5} speed={2} color="#ffd700" />
+      <pointLight position={[0, 0, 0]} color="#ffd700" intensity={2.5} distance={2.5} />
+    </group>
+  );
+}
+
+function ScriptoriumScrollMesh() {
+  const scrollRef = useRef();
+  useFrame((state) => {
+    if (scrollRef.current) {
+      scrollRef.current.rotation.y = state.clock.elapsedTime * 0.2;
+      scrollRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.07;
+    }
+  });
+  return (
+    <group ref={scrollRef}>
+      {/* Scroll core */}
+      <mesh>
+        <cylinderGeometry args={[0.16, 0.16, 1.1, 16]} />
+        <meshStandardMaterial color="#f4ebd0" roughness={0.85} />
+      </mesh>
+      {/* Wooden scroll knobs */}
+      <mesh position={[0, 0.58, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.12, 8]} />
+        <meshStandardMaterial color="#5c2e0b" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, -0.58, 0]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.12, 8]} />
+        <meshStandardMaterial color="#5c2e0b" roughness={0.6} />
+      </mesh>
+      <SparklesDrei count={25} scale={0.9} size={3} color="#8a1a1a" />
+    </group>
+  );
+}
+
+function ArtifactStage({ activeEra }) {
+  switch (activeEra) {
+    case 'indus': return <IndusSealMesh />;
+    case 'vedic': return <VedicAltarMesh />;
+    case 'maurya': return <MauryaColumnMesh />;
+    case 'gupta': return <GuptaAstrolabeMesh />;
+    case 'chola': return <CholaNatarajaMesh />;
+    case 'hindu': return <HinduGopuramMesh />;
+    case 'mughal': return <MughalDomeMesh />;
+    case 'maratha': return <MarathaFortMesh />;
+    case 'battles': return <BattlesClashMesh />;
+    case 'scribe': return <ScriptoriumScrollMesh />;
+    default: return null;
+  }
+}
+
+const Indian3DArtifactViewer = ({ activeEra }) => {
+  const [hasWebGL, setHasWebGL] = useState(true);
+
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const isSupported = !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+      setHasWebGL(isSupported);
+    } catch (e) {
+      setHasWebGL(false);
+    }
+  }, []);
+
+  if (!hasWebGL) {
+    return (
+      <div className="w-full h-full relative bg-black/60 flex items-center justify-center">
+        <img 
+          src={
+            activeEra === 'indus' 
+              ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
+              : activeEra === 'vedic'
+                ? "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop"
+                : activeEra === 'maurya'
+                  ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
+                  : activeEra === 'gupta'
+                    ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop"
+                    : activeEra === 'chola'
+                      ? "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=800&auto=format&fit=crop"
+                      : activeEra === 'hindu'
+                        ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
+                        : activeEra === 'mughal'
+                          ? "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"
+                          : activeEra === 'maratha'
+                            ? "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=800&auto=format&fit=crop"
+                            : "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
+          } 
+          alt="Historical Artifact fallback" 
+          className="w-full h-full object-cover opacity-70"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full relative bg-black/45">
+      <Canvas camera={{ position: [0, 0, 2.3], fof: 50 }}>
+        <ambientLight intensity={0.4} />
+        <pointLight position={[5, 5, 5]} intensity={1.5} />
+        <directionalLight position={[-3, 5, 2]} intensity={1} />
+        <PresentationControls 
+          global 
+          zoom={1.0} 
+          polar={[-Math.PI / 3, Math.PI / 3]} 
+          azimuth={[-Math.PI / 2, Math.PI / 2]} 
+          config={{ mass: 2, tension: 350, friction: 40 }}
+        >
+          <ArtifactStage activeEra={activeEra} />
+        </PresentationControls>
+      </Canvas>
+      <div className="absolute top-3 right-3 text-[7px] font-mono tracking-widest text-[#ff9933]/50 pointer-events-none uppercase">
+        🖱️ Drag to rotate 3D artifact
+      </div>
+    </div>
+  );
 };
 
 // --- INDIAN ARTIFACTS DATABASE ---
@@ -425,6 +845,9 @@ export default function IndianCollection() {
   const [activeExhibit, setActiveExhibit] = useState(null);
   const [mandalaRotation, setMandalaRotation] = useState(0);
   const [isSounding, setIsSounding] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  const prevEraRef = useRef(activeEra);
 
   // Audio refs for Web Audio Synthesizer
   const audioCtxRef = useRef(null);
@@ -531,6 +954,16 @@ export default function IndianCollection() {
     };
   }, []);
 
+  // Epoch translation listener
+  useEffect(() => {
+    if (prevEraRef.current !== activeEra) {
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 900);
+      prevEraRef.current = activeEra;
+      return () => clearTimeout(timer);
+    }
+  }, [activeEra]);
+
   // Convert name to Sanskrit phonetics
   const translateNameToSanskrit = (name) => {
     return name.toUpperCase().split('').map(letter => {
@@ -541,7 +974,7 @@ export default function IndianCollection() {
 
   const translatedName = translateNameToSanskrit(nameInput);
 
-  // Rotation angles for Mandala selector (10 sections: 36 degrees per notch)
+  // Rotation angles for Mandala selector (10 sections)
   const eraRotations = {
     indus: 0,
     vedic: -36,
@@ -671,6 +1104,30 @@ export default function IndianCollection() {
         </svg>
       </div>
 
+      {/* Cinematic Slide-In Hallway Transition Overlay */}
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            exit={{ x: "100%" }}
+            transition={{ duration: 0.85, ease: [0.76, 0, 0.24, 1] }}
+            className="fixed inset-0 z-[4000] pointer-events-none bg-gradient-to-r from-transparent via-[#ff9933]/30 to-transparent flex items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-[#070605]/85 backdrop-blur-md" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.15 }}
+              className="z-50 font-marcellus text-[#ff9933] text-4xl tracking-widest uppercase flex flex-col items-center gap-4"
+            >
+              <span className="text-5xl">ॐ</span>
+              <span className="text-[10px] font-mono tracking-[0.4em] text-white/70">Shifting Epoch Chambers...</span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Glowing Floating sparks */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         {[...Array(15)].map((_, i) => {
@@ -765,7 +1222,7 @@ export default function IndianCollection() {
           {/* Interactive Rotating Wheel */}
           <div className="w-[270px] h-[270px] relative flex items-center justify-center rounded-full border border-white/10 p-2">
             
-            {/* Glowing Pointer Dial Indicator (Shaped like a traditional brass Diya / flame) */}
+            {/* Glowing Pointer Dial Indicator */}
             <div className="absolute top-0 flex flex-col items-center -translate-y-4 z-30 pointer-events-none">
               <div className="w-3.5 h-3.5 bg-[#ff9933] rounded-full blur-[2px] shadow-[0_0_10px_#ffaa44]" />
               <div className="w-1.5 h-5 bg-gradient-to-b from-[#ffd700] via-[#ff9933] to-transparent rounded-full" />
@@ -790,11 +1247,9 @@ export default function IndianCollection() {
                     <stop offset="100%" stopColor="#ffd700" stopOpacity="0.4" />
                   </linearGradient>
                 </defs>
-                {/* Outer Rim */}
                 <circle cx="100" cy="100" r="95" stroke="url(#rimGrad)" strokeWidth="4.5" />
                 <circle cx="100" cy="100" r="90" stroke="url(#goldGrad)" strokeWidth="1" strokeDasharray="2,3" />
                 
-                {/* Outer decorative notches/petals */}
                 {[...Array(24)].map((_, i) => {
                   const rad = (i * 15 * Math.PI) / 180;
                   const x1 = 100 + 90 * Math.sin(rad);
@@ -804,12 +1259,10 @@ export default function IndianCollection() {
                   return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="url(#goldGrad)" strokeWidth="1.5" />;
                 })}
 
-                {/* Concentric inner rings */}
                 <circle cx="100" cy="100" r="70" stroke="url(#goldGrad)" strokeWidth="1" />
                 <circle cx="100" cy="100" r="45" stroke="url(#goldGrad)" strokeWidth="1.5" strokeDasharray="4,2" />
                 <circle cx="100" cy="100" r="22" stroke="url(#goldGrad)" strokeWidth="2" />
                 
-                {/* Styled thick spokes */}
                 {[0, 36, 72, 108, 144, 180, 216, 252, 288, 324].map((deg) => {
                   const rad = (deg * Math.PI) / 180;
                   const xSpoke = 100 + 88 * Math.sin(rad);
@@ -824,7 +1277,6 @@ export default function IndianCollection() {
                   );
                 })}
 
-                {/* Central Hub with Lotus pattern */}
                 <circle cx="100" cy="100" r="12" fill="url(#goldGrad)" />
                 <path d="M 100 90 C 97 95, 95 97, 100 100 C 105 97, 103 95, 100 90 Z" fill="#0c0a09" />
                 <path d="M 100 110 C 97 105, 95 103, 100 100 C 105 103, 103 105, 100 110 Z" fill="#0c0a09" />
@@ -832,7 +1284,6 @@ export default function IndianCollection() {
                 <path d="M 110 100 C 105 97, 103 95, 100 100 C 103 105, 105 103, 110 100 Z" fill="#0c0a09" />
               </svg>
 
-              {/* Outer Era Button Nodes on the Astrolabe Dial */}
               {[
                 { id: 'indus', idx: 'I', label: 'Indus', rot: 0 },
                 { id: 'vedic', idx: 'II', label: 'Vedic', rot: 36 },
@@ -898,7 +1349,7 @@ export default function IndianCollection() {
         {/* Dynamic Background Wrapper */}
         <div className={`absolute inset-0 bg-gradient-to-b ${currentTheme.bgGrad} transition-colors duration-1000 z-0 pointer-events-none`} />
 
-        {/* Thematic Concentric Aura Ripple animation for Vedic/Hindu/Indus */}
+        {/* Thematic Concentric Aura Ripple animation */}
         {(activeEra === 'indus' || activeEra === 'vedic' || activeEra === 'hindu' || activeEra === 'scribe') && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 flex items-center justify-center">
             <motion.div 
@@ -931,7 +1382,6 @@ export default function IndianCollection() {
                   {currentTheme.title}
                 </h2>
                 
-                {/* Custom divider */}
                 <div className="h-[2px] w-20 mt-3 rounded-full" style={{ backgroundColor: currentTheme.accent }} />
                 
                 <p className="text-gray-300 text-xs md:text-sm font-light leading-relaxed mt-5 max-w-xl font-sans">
@@ -939,60 +1389,25 @@ export default function IndianCollection() {
                 </p>
               </div>
 
-              {/* Interactive Banner Frame (Launches Multimedia Modal) */}
+              {/* INTERACTIVE 3D ARTIFACT VIEWPORT archway frame */}
               <div 
-                onClick={() => setActiveExhibit(activeEra)}
-                className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden temple-arch-mask border relative shadow-[0_15px_40px_rgba(0,0,0,0.85)] group cursor-pointer transition-all duration-500"
-                style={{ borderColor: `${currentTheme.accent}40` }}
+                className="lg:col-span-5 h-56 md:h-64 w-full overflow-hidden temple-arch-mask border relative shadow-[0_20px_50px_rgba(0,0,0,0.95)] group transition-all duration-500 bg-black/30"
+                style={{ borderColor: `${currentTheme.accent}45` }}
               >
-                <div className="absolute inset-0 transition-all duration-500 group-hover:scale-105" style={{ backgroundColor: currentTheme.glow }} />
-                <img 
-                  src={
-                    activeEra === 'indus' 
-                      ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-                      : activeEra === 'vedic'
-                        ? "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop"
-                        : activeEra === 'maurya'
-                          ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                          : activeEra === 'gupta'
-                            ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop"
-                            : activeEra === 'chola'
-                              ? "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=800&auto=format&fit=crop"
-                              : activeEra === 'hindu'
-                                ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-                                : activeEra === 'mughal'
-                                  ? "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"
-                                  : activeEra === 'maratha'
-                                    ? "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=800&auto=format&fit=crop"
-                                    : activeEra === 'battles'
-                                      ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                                      : "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                  } 
-                  alt="Era Banner" 
-                  className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.05] transition-all duration-700 group-hover:scale-105"
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-transparent to-black/30" />
-                <div 
-                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border"
+                {/* 3D Viewer */}
+                <Indian3DArtifactViewer activeEra={activeEra} />
+
+                {/* Corner floating button for gallery trigger */}
+                <button
+                  onClick={() => setActiveExhibit(activeEra)}
+                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border bg-black/85 hover:bg-[#ff9933] hover:text-black hover:border-white transition-all cursor-pointer shadow-lg z-30"
                   style={{ 
-                    backgroundColor: '#0c0a09', 
                     borderColor: `${currentTheme.accent}40`,
                     color: currentTheme.accent
                   }}
                 >
-                  Multimedia Exhibit
-                </div>
-                
-                <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <span 
-                    className="px-5 py-2.5 text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-xl flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
-                    style={{ backgroundColor: currentTheme.accent }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                    Enter Exhibit Gallery
-                  </span>
-                </div>
+                  🎬 Exhibit Gallery &amp; Video
+                </button>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -1066,7 +1481,7 @@ export default function IndianCollection() {
                   </div>
                 </motion.div>
               ) : (
-                /* Dynamic Custom Cards grid depending on the era */
+                /* Dynamic Custom Cards grid */
                 <motion.div
                   key={activeEra}
                   initial="hidden"
@@ -1405,7 +1820,6 @@ const CholaArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCha
       transition={{ duration: 0.6 }}
       animate={{ y: [0, -6, 0] }}
       style={{ perspective: 1000 }}
-      // Waves sway loop animation
       whileHover={{ scale: 1.03, borderColor: "#38bdf8", boxShadow: "0 20px 45px rgba(56,189,248,0.15)" }}
       className="bg-[#071012] border-2 border-slate-800 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-500 group"
     >
@@ -1543,9 +1957,7 @@ const MughalArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setCh
       whileHover={{ scale: 1.02, borderColor: "#10b981", boxShadow: "0 25px 45px rgba(16,185,129,0.18)" }}
       className="bg-[#020e08] border border-[#10b981]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-500 group"
     >
-      {/* Symmetrical border frames */}
       <div className="absolute top-2 left-2 right-2 bottom-2 border border-dashed border-[#10b981]/5 rounded-xl pointer-events-none group-hover:border-[#10b981]/15 transition-colors" />
-      
       <div className="absolute right-4 top-4 text-2xl font-mono text-[#10b981]/5 select-none pointer-events-none">
         ☪
       </div>
@@ -1679,7 +2091,6 @@ const BattlesArtifactCard = ({ artifact, index, handleSpeak, setIsChatOpen, setC
       whileHover={{ scale: 1.02, borderColor: "#e11d48", boxShadow: "0 25px 45px rgba(225,29,72,0.18)" }}
       className="bg-[#0e0204] border border-[#e11d48]/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-lg transition-all duration-300 group"
     >
-      {/* Clash Spark visual line */}
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#e11d48]/[0.02] to-transparent pointer-events-none" />
       <div className="absolute right-4 top-4 text-3xl font-mono text-[#e11d48]/5 select-none pointer-events-none">
         ⚔
