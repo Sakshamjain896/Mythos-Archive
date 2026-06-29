@@ -1,188 +1,10 @@
-import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Volume2, MessageSquare, X, Info, 
   HelpCircle, Sparkles, Compass, Award, Bookmark
 } from 'lucide-react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { PresentationControls, Center, useCursor } from '@react-three/drei';
-import * as THREE from 'three';
-import PharaohMask from '../components/canvas/PharaohMask';
 import { useNavigationStore } from '../store/navigationStore';
-
-// --- 3D CANVASES & VFX FOR EGYPT ---
-function VFXParticles({ count = 100, color = "#d4af37" }) {
-  const pointsRef = useRef();
-  
-  const particles = useMemo(() => {
-    const temp = new Float32Array(count * 3);
-    const speeds = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      temp[i * 3] = (Math.random() - 0.5) * 5;
-      temp[i * 3 + 1] = (Math.random() - 0.5) * 5;
-      temp[i * 3 + 2] = (Math.random() - 0.5) * 5;
-      speeds[i] = 0.2 + Math.random() * 0.8;
-    }
-    return { positions: temp, speeds };
-  }, [count]);
-
-  useFrame((state) => {
-    if (pointsRef.current) {
-      const positions = pointsRef.current.geometry.attributes.position.array;
-      const time = state.clock.getElapsedTime();
-      
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += 0.003 * particles.speeds[i];
-        if (positions[i * 3 + 1] > 2.5) {
-          positions[i * 3 + 1] = -2.5;
-        }
-        positions[i * 3] += Math.sin(time + i) * 0.001;
-      }
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-      pointsRef.current.rotation.y += 0.001;
-    }
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[particles.positions, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color={color}
-        size={0.05}
-        sizeAttenuation={true}
-        transparent={true}
-        opacity={0.4}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-function ProceduralRelic({ type, color }) {
-  const meshRef = useRef();
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.006;
-      meshRef.current.rotation.x += 0.002;
-    }
-  });
-
-  if (type === 'mummy' || type === 'coffin') {
-    return (
-      <group ref={meshRef}>
-        <mesh position={[0, 0.45, 0]} castShadow>
-          <sphereGeometry args={[0.22, 32, 16]} />
-          <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.1} clearcoat={1} />
-        </mesh>
-        <mesh position={[0, -0.1, 0]} castShadow>
-          <cylinderGeometry args={[0.2, 0.26, 0.8, 32]} />
-          <meshPhysicalMaterial color="#141513" metalness={0.1} roughness={0.8} />
-        </mesh>
-        <mesh position={[0, -0.35, 0]} castShadow>
-          <torusGeometry args={[0.28, 0.02, 16, 100]} />
-          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
-        </mesh>
-        <mesh position={[0, 0.2, 0]} castShadow>
-          <torusGeometry args={[0.22, 0.02, 16, 100]} />
-          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
-        </mesh>
-      </group>
-    );
-  }
-
-  if (type === 'weapon') {
-    return (
-      <group ref={meshRef}>
-        <mesh rotation={[0, 0, Math.PI / 4]} castShadow>
-          <boxGeometry args={[0.06, 1.1, 0.015]} />
-          <meshPhysicalMaterial color="#b5b5b5" metalness={0.9} roughness={0.15} />
-        </mesh>
-        <mesh rotation={[0, 0, -Math.PI / 4]} castShadow>
-          <boxGeometry args={[0.06, 1.1, 0.015]} />
-          <meshPhysicalMaterial color="#b5b5b5" metalness={0.9} roughness={0.15} />
-        </mesh>
-        <mesh castShadow>
-          <sphereGeometry args={[0.12, 16, 16]} />
-          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
-        </mesh>
-      </group>
-    );
-  }
-
-  if (type === 'accessory') {
-    return (
-      <group ref={meshRef}>
-        <mesh castShadow>
-          <dodecahedronGeometry args={[0.25]} />
-          <meshPhysicalMaterial color="#0055aa" roughness={0.1} transmission={0.6} thickness={1} clearcoat={1} />
-        </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <torusGeometry args={[0.42, 0.04, 16, 100]} />
-          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
-        </mesh>
-        <mesh rotation={[0, Math.PI / 2, 0]} castShadow>
-          <torusGeometry args={[0.3, 0.02, 16, 100]} />
-          <meshStandardMaterial color={color} metalness={0.9} roughness={0.1} />
-        </mesh>
-      </group>
-    );
-  }
-
-  return (
-    <mesh ref={meshRef} castShadow>
-      <octahedronGeometry args={[0.48]} />
-      <meshPhysicalMaterial color={color} metalness={0.8} roughness={0.2} clearcoat={1} />
-    </mesh>
-  );
-}
-
-function Exhibit3DCanvas({ artifactType, color = "#d4af37", modelScale = 1.0 }) {
-  return (
-    <div className="w-full h-full relative font-sans" style={{ minHeight: '180px' }}>
-      <Canvas
-        camera={{ position: [0, 0, 3.2], fov: 40 }}
-        gl={{ antialias: true, alpha: true }}
-        shadows
-      >
-        <ambientLight intensity={1.2} />
-        <spotLight position={[4, 4, 4]} intensity={2.5} angle={0.4} penumbra={1} castShadow color={color} />
-        <pointLight position={[-4, -4, -2]} intensity={0.5} color="#ffffff" />
-        
-        <PresentationControls
-          global
-          zoom={0.9}
-          polar={[-0.2, 0.4]}
-          azimuth={[-Infinity, Infinity]}
-          config={{ mass: 1, tension: 200 }}
-        >
-          <Center>
-            {artifactType === 'pharaoh' ? (
-              <Suspense fallback={
-                <mesh castShadow>
-                  <sphereGeometry args={[0.36, 32, 32]} />
-                  <meshStandardMaterial color={color} roughness={0.2} metalness={0.9} />
-                </mesh>
-              }>
-                <PharaohMask scale={modelScale} position={[0, -0.2, 0]} />
-              </Suspense>
-            ) : (
-              <ProceduralRelic type={artifactType} color={color} />
-            )}
-          </Center>
-        </PresentationControls>
-        
-        <VFXParticles count={70} color={color} />
-      </Canvas>
-    </div>
-  );
-}
 
 // --- HIEROGLYPH DICTIONARY & MAP ---
 const LETTER_TO_HIEROGLYPH = {
@@ -750,16 +572,23 @@ export default function EgyptianCollection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1 }}
               onClick={() => setActiveExhibit('pharaoh')}
-              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#d4af37]/25 hover:border-[#d4af37]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300"
+              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#d4af37]/25 hover:border-[#d4af37]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer transition-all duration-300"
             >
-              <Exhibit3DCanvas artifactType="pharaoh" color="#d4af37" modelScale={1.3} />
-              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#d4af37] bg-black/75 px-3 py-1 rounded border border-[#d4af37]/25 pointer-events-none">
-                Exhibit Hall A • Interactive 3D
+              <img 
+                src="https://images.unsplash.com/photo-1539650116574-8efeb43e2750?q=80&w=800&auto=format&fit=crop" 
+                alt="Room I Banner - Pharaohs" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 contrast-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/20" />
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#d4af37] bg-black/75 px-3 py-1 rounded border border-[#d4af37]/25">
+                Exhibit Hall A
               </div>
-              <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
-                Drag to Rotate
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <span className="px-4 py-2 bg-[#d4af37] text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-[0_0_15px_rgba(212,175,55,0.4)] flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Enter Exhibit
+                </span>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
 
@@ -809,16 +638,23 @@ export default function EgyptianCollection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1 }}
               onClick={() => setActiveExhibit('mummy')}
-              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#4d5d53]/25 hover:border-[#4d5d53]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300"
+              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#4d5d53]/25 hover:border-[#4d5d53]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer transition-all duration-300"
             >
-              <Exhibit3DCanvas artifactType="mummy" color="#4d5d53" modelScale={1.0} />
-              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#4d5d53] bg-black/75 px-3 py-1 rounded border border-[#4d5d53]/25 pointer-events-none">
-                Exhibit Hall B • Interactive 3D
+              <img 
+                src="https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=800&auto=format&fit=crop" 
+                alt="Room II Banner - Mummification" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 contrast-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/20" />
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#4d5d53] bg-black/75 px-3 py-1 rounded border border-[#4d5d53]/25">
+                Exhibit Hall B
               </div>
-              <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
-                Drag to Rotate
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <span className="px-4 py-2 bg-[#4d5d53] text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-[0_0_15px_rgba(77,93,83,0.4)] flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Enter Exhibit
+                </span>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
 
@@ -868,16 +704,23 @@ export default function EgyptianCollection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1 }}
               onClick={() => setActiveExhibit('coffin')}
-              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#5978bb]/25 hover:border-[#5978bb]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300"
+              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#5978bb]/25 hover:border-[#5978bb]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer transition-all duration-300"
             >
-              <Exhibit3DCanvas artifactType="coffin" color="#5978bb" modelScale={1.0} />
-              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#5978bb] bg-black/75 px-3 py-1 rounded border border-[#5978bb]/25 pointer-events-none">
-                Exhibit Hall C • Interactive 3D
+              <img 
+                src="https://images.unsplash.com/photo-1590736969955-71cc94801759?q=80&w=800&auto=format&fit=crop" 
+                alt="Room III Banner - Sarcophagi" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 contrast-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/20" />
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#5978bb] bg-black/75 px-3 py-1 rounded border border-[#5978bb]/25">
+                Exhibit Hall C
               </div>
-              <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
-                Drag to Rotate
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <span className="px-4 py-2 bg-[#5978bb] text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-[0_0_15px_rgba(89,120,187,0.4)] flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Enter Exhibit
+                </span>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
 
@@ -927,16 +770,23 @@ export default function EgyptianCollection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1 }}
               onClick={() => setActiveExhibit('weapon')}
-              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#b58d63]/25 hover:border-[#b58d63]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300"
+              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#b58d63]/25 hover:border-[#b58d63]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer transition-all duration-300"
             >
-              <Exhibit3DCanvas artifactType="weapon" color="#b58d63" modelScale={1.0} />
-              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#b58d63] bg-black/75 px-3 py-1 rounded border border-[#b58d63]/25 pointer-events-none">
-                Exhibit Hall D • Interactive 3D
+              <img 
+                src="https://images.unsplash.com/photo-1551029506-0807d4b21a68?q=80&w=800&auto=format&fit=crop" 
+                alt="Room IV Banner - Armory" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 contrast-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/20" />
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#b58d63] bg-black/75 px-3 py-1 rounded border border-[#b58d63]/25">
+                Exhibit Hall D
               </div>
-              <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
-                Drag to Rotate
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <span className="px-4 py-2 bg-[#b58d63] text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-[0_0_15px_rgba(181,141,99,0.4)] flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Enter Exhibit
+                </span>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
 
@@ -986,16 +836,23 @@ export default function EgyptianCollection() {
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 1 }}
               onClick={() => setActiveExhibit('accessory')}
-              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#d4af37]/25 hover:border-[#d4af37]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300"
+              className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#d4af37]/25 hover:border-[#d4af37]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer transition-all duration-300"
             >
-              <Exhibit3DCanvas artifactType="accessory" color="#d4af37" modelScale={1.0} />
-              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#d4af37] bg-black/75 px-3 py-1 rounded border border-[#d4af37]/25 pointer-events-none">
-                Exhibit Hall E • Interactive 3D
+              <img 
+                src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop" 
+                alt="Room V Banner - Treasury" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter brightness-75 contrast-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/20" />
+              <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#d4af37] bg-black/75 px-3 py-1 rounded border border-[#d4af37]/25">
+                Exhibit Hall E
               </div>
-              <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
-                Drag to Rotate
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <span className="px-4 py-2 bg-[#d4af37] text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-[0_0_15px_rgba(212,175,55,0.4)] flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                  Enter Exhibit
+                </span>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
             </motion.div>
           </div>
 

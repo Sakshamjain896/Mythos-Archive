@@ -1,181 +1,13 @@
-import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Volume2, MessageSquare, X, Info, 
   Sparkles, Shield, Compass, Landmark, Music, VolumeX, Eye
 } from 'lucide-react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { PresentationControls, Center, useCursor } from '@react-three/drei';
-import * as THREE from 'three';
-import RomanArtifact from '../components/canvas/RomanArtifact';
+import { Canvas } from '@react-three/fiber';
+import { PresentationControls, Stage, useGLTF } from '@react-three/drei';
 import PantheonScene from '../components/PantheonScene';
 import { useNavigationStore } from '../store/navigationStore';
-
-// --- 3D CANVASES & VFX FOR ROME ---
-function VFXParticles({ count = 100, color = "#d4af37" }) {
-  const pointsRef = useRef();
-  
-  const particles = useMemo(() => {
-    const temp = new Float32Array(count * 3);
-    const speeds = new Float32Array(count);
-    for (let i = 0; i < count; i++) {
-      temp[i * 3] = (Math.random() - 0.5) * 5;
-      temp[i * 3 + 1] = (Math.random() - 0.5) * 5;
-      temp[i * 3 + 2] = (Math.random() - 0.5) * 5;
-      speeds[i] = 0.2 + Math.random() * 0.8;
-    }
-    return { positions: temp, speeds };
-  }, [count]);
-
-  useFrame((state) => {
-    if (pointsRef.current) {
-      const positions = pointsRef.current.geometry.attributes.position.array;
-      const time = state.clock.getElapsedTime();
-      
-      for (let i = 0; i < count; i++) {
-        positions[i * 3 + 1] += 0.003 * particles.speeds[i];
-        if (positions[i * 3 + 1] > 2.5) {
-          positions[i * 3 + 1] = -2.5;
-        }
-        positions[i * 3] += Math.sin(time + i) * 0.001;
-      }
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-      pointsRef.current.rotation.y += 0.001;
-    }
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[particles.positions, 3]}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color={color}
-        size={0.05}
-        sizeAttenuation={true}
-        transparent={true}
-        opacity={0.4}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-function ProceduralRelic({ type, color }) {
-  const meshRef = useRef();
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.006;
-      meshRef.current.rotation.x += 0.002;
-    }
-  });
-
-  if (type === 'gladius') {
-    return (
-      <group ref={meshRef}>
-        <mesh rotation={[0, 0, Math.PI / 4]} castShadow>
-          <boxGeometry args={[0.05, 1.1, 0.015]} />
-          <meshPhysicalMaterial color="#cccccc" metalness={0.9} roughness={0.15} />
-        </mesh>
-        <mesh rotation={[0, 0, -Math.PI / 4]} castShadow>
-          <boxGeometry args={[0.06, 1.1, 0.015]} />
-          <meshPhysicalMaterial color="#cccccc" metalness={0.9} roughness={0.15} />
-        </mesh>
-        <mesh castShadow>
-          <sphereGeometry args={[0.12, 16, 16]} />
-          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
-        </mesh>
-      </group>
-    );
-  }
-
-  if (type === 'cameo') {
-    return (
-      <group ref={meshRef}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.38, 0.38, 0.06, 32]} rotation={[Math.PI / 2, 0, 0]} />
-          <meshPhysicalMaterial color="#0b0807" metalness={0.1} roughness={0.2} clearcoat={1.0} />
-        </mesh>
-        <mesh position={[0, 0, 0.04]} castShadow>
-          <cylinderGeometry args={[0.34, 0.34, 0.02, 32]} rotation={[Math.PI / 2, 0, 0]} />
-          <meshStandardMaterial color="#ffffff" roughness={0.5} />
-        </mesh>
-        <mesh position={[0, 0, 0.051]}>
-          <torusGeometry args={[0.36, 0.02, 16, 100]} />
-          <meshStandardMaterial color={color} metalness={0.9} roughness={0.2} />
-        </mesh>
-      </group>
-    );
-  }
-
-  if (type === 'aureus') {
-    return (
-      <group ref={meshRef}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.32, 0.32, 0.02, 32]} rotation={[Math.PI / 2, 0, 0]} />
-          <meshPhysicalMaterial color={color} metalness={1.0} roughness={0.15} clearcoat={0.5} />
-        </mesh>
-        <mesh position={[0.1, 0.1, 0.02]} rotation={[Math.PI / 2, 0.3, 0]} castShadow>
-          <cylinderGeometry args={[0.26, 0.26, 0.02, 32]} />
-          <meshPhysicalMaterial color={color} metalness={1.0} roughness={0.15} />
-        </mesh>
-      </group>
-    );
-  }
-
-  return (
-    <mesh ref={meshRef} castShadow>
-      <torusGeometry args={[0.35, 0.08, 16, 100]} />
-      <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.1} clearcoat={1.0} />
-    </mesh>
-  );
-}
-
-function Exhibit3DCanvas({ artifactType, color = "#d4af37", modelScale = 1.0 }) {
-  return (
-    <div className="w-full h-full relative font-sans" style={{ minHeight: '180px' }}>
-      <Canvas
-        camera={{ position: [0, 0, 2.8], fov: 40 }}
-        gl={{ antialias: true, alpha: true }}
-        shadows
-      >
-        <ambientLight intensity={1.2} />
-        <spotLight position={[4, 4, 4]} intensity={2.5} angle={0.4} penumbra={1} castShadow color={color} />
-        <pointLight position={[-4, -4, -2]} intensity={0.5} color="#ffffff" />
-        
-        <PresentationControls
-          global
-          zoom={0.9}
-          polar={[-0.2, 0.4]}
-          azimuth={[-Infinity, Infinity]}
-          config={{ mass: 1, tension: 200 }}
-        >
-          <Center>
-            {(artifactType === 'galea' || artifactType === 'aquila') ? (
-              <Suspense fallback={
-                <mesh castShadow>
-                  <sphereGeometry args={[0.36, 32, 32]} />
-                  <meshStandardMaterial color={color} roughness={0.2} metalness={0.9} />
-                </mesh>
-              }>
-                <RomanArtifact scale={modelScale} position={[0, -0.15, 0]} />
-              </Suspense>
-            ) : (
-              <ProceduralRelic type={artifactType} color={color} />
-            )}
-          </Center>
-        </PresentationControls>
-        
-        <VFXParticles count={70} color={color} />
-      </Canvas>
-    </div>
-  );
-}
 
 // --- 3D VAULT MODEL AND DIALOGUE ---
 const Model = ({ url }) => {
@@ -764,8 +596,14 @@ export default function RomanArchive() {
                 Triumphal Arch of Titus
               </div>
 
-              <div className="w-full h-full rounded-[10rem] overflow-hidden relative border border-white/5 shadow-inner bg-black/40 backdrop-blur-sm">
-                <Exhibit3DCanvas artifactType={activeItem.id} color="#d4af37" modelScale={1.2} />
+              <div className="w-full h-full rounded-[10rem] overflow-hidden relative border border-white/5 shadow-inner">
+                <img 
+                  src={activeItem.image} 
+                  alt={activeItem.title} 
+                  className="w-full h-full object-cover filter sepia-[20%] brightness-[0.7] contrast-[1.08] hover:scale-105 transition-transform duration-500"
+                />
+                {/* Dark vignette */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent opacity-85 pointer-events-none" />
               </div>
 
               {/* Hologram badge */}
