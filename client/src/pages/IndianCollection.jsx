@@ -1,10 +1,260 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Volume2, MessageSquare, X, Info, 
   HelpCircle, Sparkles, Compass, Award, Anchor, Sun, Flame, Shield, BookOpen, Music, VolumeX
 } from 'lucide-react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PresentationControls, Center, useCursor } from '@react-three/drei';
+import * as THREE from 'three';
+import IndianArtifact from '../components/canvas/IndianArtifact';
 import { useNavigationStore } from '../store/navigationStore';
+
+// --- 3D CANVASES & VFX FOR INDIA ---
+function VFXParticles({ count = 100, color = "#ff9933" }) {
+  const pointsRef = useRef();
+  
+  const particles = useMemo(() => {
+    const temp = new Float32Array(count * 3);
+    const speeds = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      temp[i * 3] = (Math.random() - 0.5) * 5;
+      temp[i * 3 + 1] = (Math.random() - 0.5) * 5;
+      temp[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      speeds[i] = 0.2 + Math.random() * 0.8;
+    }
+    return { positions: temp, speeds };
+  }, [count]);
+
+  useFrame((state) => {
+    if (pointsRef.current) {
+      const positions = pointsRef.current.geometry.attributes.position.array;
+      const time = state.clock.getElapsedTime();
+      
+      for (let i = 0; i < count; i++) {
+        positions[i * 3 + 1] += 0.003 * particles.speeds[i];
+        if (positions[i * 3 + 1] > 2.5) {
+          positions[i * 3 + 1] = -2.5;
+        }
+        positions[i * 3] += Math.sin(time + i) * 0.001;
+      }
+      pointsRef.current.geometry.attributes.position.needsUpdate = true;
+      pointsRef.current.rotation.y += 0.001;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          args={[particles.positions, 3]}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        color={color}
+        size={0.05}
+        sizeAttenuation={true}
+        transparent={true}
+        opacity={0.4}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+function ProceduralRelic({ type, color }) {
+  const meshRef = useRef();
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.006;
+      meshRef.current.rotation.x += 0.002;
+    }
+  });
+
+  if (type === 'vedic') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <boxGeometry args={[0.7, 0.08, 0.35]} />
+          <meshPhysicalMaterial color="#c29b69" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0.12, 0.02]} castShadow>
+          <boxGeometry args={[0.65, 0.06, 0.32]} />
+          <meshPhysicalMaterial color="#eeddbb" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.15, 0.03]} castShadow>
+          <boxGeometry args={[0.4, 0.01, 0.1]} />
+          <meshStandardMaterial color={color} metalness={1} roughness={0.1} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'maurya') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.15, 0.18, 0.8, 32]} />
+          <meshPhysicalMaterial color="#b29375" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.46, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 0.12, 32]} />
+          <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.46, 0.07]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.18, 0.02, 16, 100]} />
+          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'gupta') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.28, 0.28, 0.02, 32]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshPhysicalMaterial color={color} metalness={1.0} roughness={0.15} />
+        </mesh>
+        <mesh position={[0.08, 0.08, 0.02]} rotation={[Math.PI / 2, 0.3, 0]} castShadow>
+          <cylinderGeometry args={[0.24, 0.24, 0.02, 32]} />
+          <meshPhysicalMaterial color={color} metalness={1.0} roughness={0.15} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'chola') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.04, 0.04, 1.0, 16]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+        <mesh position={[0, 0.5, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
+          <boxGeometry args={[0.04, 0.3, 0.04]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+        <mesh position={[-0.15, 0.6, 0]} castShadow>
+          <boxGeometry args={[0.03, 0.2, 0.03]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+        <mesh position={[0.15, 0.6, 0]} castShadow>
+          <boxGeometry args={[0.03, 0.2, 0.03]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+        <mesh position={[0, 0.65, 0]} castShadow>
+          <boxGeometry args={[0.03, 0.3, 0.03]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'mughal') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.32, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.1} clearcoat={1.0} />
+        </mesh>
+        <mesh position={[0, -0.15, 0]} castShadow>
+          <cylinderGeometry args={[0.32, 0.32, 0.3, 32]} />
+          <meshStandardMaterial color="#b29375" roughness={0.8} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'maratha') {
+    return (
+      <group ref={meshRef}>
+        <mesh rotation={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.38, 0.38, 0.04, 32]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshPhysicalMaterial color="#3a3d40" metalness={0.8} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 0, 0.03]} castShadow>
+          <torusGeometry args={[0.3, 0.02, 16, 100]} />
+          <meshStandardMaterial color={color} metalness={0.9} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0, 0.04]}>
+          <dodecahedronGeometry args={[0.08]} />
+          <meshStandardMaterial color={color} metalness={1} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'battles') {
+    return (
+      <group ref={meshRef}>
+        <mesh rotation={[0, 0, Math.PI / 4]} castShadow>
+          <boxGeometry args={[0.04, 1.2, 0.02]} />
+          <meshPhysicalMaterial color="#b0b0b0" metalness={0.9} roughness={0.1} />
+        </mesh>
+        <mesh rotation={[0, 0, -Math.PI / 4]} castShadow>
+          <boxGeometry args={[0.04, 1.2, 0.02]} />
+          <meshPhysicalMaterial color="#b0b0b0" metalness={0.9} roughness={0.1} />
+        </mesh>
+        <mesh castShadow>
+          <sphereGeometry args={[0.12, 16, 16]} />
+          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
+        </mesh>
+      </group>
+    );
+  }
+
+  return (
+    <mesh ref={meshRef} castShadow>
+      <dodecahedronGeometry args={[0.38]} />
+      <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.1} clearcoat={1.0} />
+    </mesh>
+  );
+}
+
+function Exhibit3DCanvas({ artifactType, color = "#ff9933", modelScale = 1.0 }) {
+  return (
+    <div className="w-full h-full relative font-sans" style={{ minHeight: '180px' }}>
+      <Canvas
+        camera={{ position: [0, 0, 2.8], fov: 40 }}
+        gl={{ antialias: true, alpha: true }}
+        shadows
+      >
+        <ambientLight intensity={1.2} />
+        <spotLight position={[4, 4, 4]} intensity={2.5} angle={0.4} penumbra={1} castShadow color={color} />
+        <pointLight position={[-4, -4, -2]} intensity={0.5} color="#ffffff" />
+        
+        <PresentationControls
+          global
+          zoom={0.9}
+          polar={[-0.2, 0.4]}
+          azimuth={[-Infinity, Infinity]}
+          config={{ mass: 1, tension: 200 }}
+        >
+          <Center>
+            {artifactType === 'indus' ? (
+              <Suspense fallback={
+                <mesh castShadow>
+                  <sphereGeometry args={[0.36, 32, 32]} />
+                  <meshStandardMaterial color={color} roughness={0.2} metalness={0.9} />
+                </mesh>
+              }>
+                <IndianArtifact scale={modelScale} position={[0, -0.15, 0]} />
+              </Suspense>
+            ) : (
+              <ProceduralRelic type={artifactType} color={color} />
+            )}
+          </Center>
+        </PresentationControls>
+        
+        <VFXParticles count={70} color={color} />
+      </Canvas>
+    </div>
+  );
+}
 
 // --- SANSKRIT DICTIONARY & MAP ---
 const LETTER_TO_SANSKRIT = {
@@ -1018,62 +1268,27 @@ export default function IndianCollection() {
               </div>
 
               {/* 3D PERSPECTIVE TILT Banner Frame (Launches Multimedia Modal) */}
-              <TiltCard 
+              <div 
                 onClick={() => setActiveExhibit(activeEra)}
-                className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden temple-arch-mask border relative shadow-[0_15px_40px_rgba(0,0,0,0.85)] group cursor-pointer transition-all duration-500"
+                className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden temple-arch-mask border relative shadow-[0_15px_40px_rgba(0,0,0,0.85)] group cursor-pointer transition-all duration-500 bg-black/40 backdrop-blur-sm"
                 style={{ borderColor: `${currentTheme.accent}40` }}
               >
-                <div className="absolute inset-0 transition-all duration-500 group-hover:scale-105" style={{ backgroundColor: currentTheme.glow }} />
-                <img 
-                  src={
-                    activeEra === 'indus' 
-                      ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-                      : activeEra === 'vedic'
-                        ? "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=800&auto=format&fit=crop"
-                        : activeEra === 'maurya'
-                          ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                          : activeEra === 'gupta'
-                            ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=800&auto=format&fit=crop"
-                            : activeEra === 'chola'
-                              ? "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=800&auto=format&fit=crop"
-                              : activeEra === 'hindu'
-                                ? "https://images.unsplash.com/photo-1608958416715-4fa769eb0707?q=80&w=800&auto=format&fit=crop"
-                                : activeEra === 'mughal'
-                                  ? "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"
-                                  : activeEra === 'maratha'
-                                    ? "https://images.unsplash.com/photo-1620616611484-9fa572de674a?q=80&w=800&auto=format&fit=crop"
-                                    : activeEra === 'battles'
-                                      ? "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                                      : "https://images.unsplash.com/photo-1568252542512-9fe8fe9c87bb?q=80&w=800&auto=format&fit=crop"
-                  } 
-                  alt="Era Banner" 
-                  className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.05] transition-all duration-700 group-hover:scale-105"
-                  style={{ transform: "translateZ(20px)" }}
-                />
-                
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-transparent to-black/30" />
+                <Exhibit3DCanvas artifactType={activeEra} color={currentTheme.accent} modelScale={1.1} />
                 <div 
-                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border"
+                  className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest px-3.5 py-1.5 rounded-full border pointer-events-none"
                   style={{ 
                     backgroundColor: '#0c0a09', 
                     borderColor: `${currentTheme.accent}40`,
                     color: currentTheme.accent,
-                    transform: "translateZ(30px)"
                   }}
                 >
-                  Multimedia Exhibit
+                  Interactive 3D Exhibit
                 </div>
-                
-                <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <span 
-                    className="px-5 py-2.5 text-black font-mono text-[10px] font-bold tracking-widest uppercase rounded-full shadow-xl flex items-center gap-2 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
-                    style={{ backgroundColor: currentTheme.accent, transform: "translateZ(40px)" }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-                    Enter Exhibit Gallery
-                  </span>
+                <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
+                  Drag to Rotate
                 </div>
-              </TiltCard>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              </div>
             </motion.div>
           </AnimatePresence>
 

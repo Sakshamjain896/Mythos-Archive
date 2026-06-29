@@ -1,10 +1,199 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Volume2, MessageSquare, X, Info, 
   HelpCircle, Sparkles, Compass, Music, VolumeX, Eye, BookOpen
 } from 'lucide-react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { PresentationControls, Center, useCursor } from '@react-three/drei';
+import * as THREE from 'three';
+import MayanArtifact from '../components/canvas/MayanArtifact';
 import { useNavigationStore } from '../store/navigationStore';
+
+// --- 3D CANVASES & VFX FOR MAYA ---
+function VFXParticles({ count = 100, color = "#10b981" }) {
+  const pointsRef = useRef();
+  
+  const particles = useMemo(() => {
+    const temp = new Float32Array(count * 3);
+    const speeds = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      temp[i * 3] = (Math.random() - 0.5) * 5;
+      temp[i * 3 + 1] = (Math.random() - 0.5) * 5;
+      temp[i * 3 + 2] = (Math.random() - 0.5) * 5;
+      speeds[i] = 0.2 + Math.random() * 0.8;
+    }
+    return { positions: temp, speeds };
+  }, [count]);
+
+  useFrame((state) => {
+    if (pointsRef.current) {
+      const positions = pointsRef.current.geometry.attributes.position.array;
+      const time = state.clock.getElapsedTime();
+      
+      for (let i = 0; i < count; i++) {
+        positions[i * 3 + 1] += 0.003 * particles.speeds[i];
+        if (positions[i * 3 + 1] > 2.5) {
+          positions[i * 3 + 1] = -2.5;
+        }
+        positions[i * 3] += Math.sin(time + i) * 0.001;
+      }
+      pointsRef.current.geometry.attributes.position.needsUpdate = true;
+      pointsRef.current.rotation.y += 0.001;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          args={[particles.positions, 3]}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        color={color}
+        size={0.05}
+        sizeAttenuation={true}
+        transparent={true}
+        opacity={0.4}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+function ProceduralRelic({ type, color }) {
+  const meshRef = useRef();
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.006;
+      meshRef.current.rotation.x += 0.002;
+    }
+  });
+
+  if (type === 'xibalba') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.3, 32, 16]} />
+          <meshPhysicalMaterial color="#082b1b" metalness={0.1} roughness={0.1} clearcoat={1} clearcoatRoughness={0.1} />
+        </mesh>
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.28, 0.4, 32]} />
+          <meshStandardMaterial color="#0a3c26" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, -0.1, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.34, 0.02, 16, 100]} />
+          <meshStandardMaterial color={color} metalness={0.9} roughness={0.1} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'highland') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <boxGeometry args={[0.3, 1.2, 0.3]} />
+          <meshPhysicalMaterial color="#2d2d2d" metalness={0.2} roughness={0.9} />
+        </mesh>
+        <mesh position={[0, -0.65, 0]} castShadow>
+          <boxGeometry args={[0.5, 0.2, 0.5]} />
+          <meshStandardMaterial color="#1e1e1e" roughness={0.9} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'postclassic') {
+    return (
+      <group ref={meshRef}>
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <boxGeometry args={[0.9, 0.2, 0.5]} />
+          <meshStandardMaterial color="#404040" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0, 0]} castShadow>
+          <cylinderGeometry args={[0.18, 0.18, 0.7, 16]} rotation={[0, 0, Math.PI / 2]} />
+          <meshPhysicalMaterial color="#303030" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.15, 0]} castShadow>
+          <cylinderGeometry args={[0.22, 0.15, 0.15, 16]} />
+          <meshPhysicalMaterial color={color} metalness={0.9} roughness={0.1} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (type === 'scribe') {
+    return (
+      <group ref={meshRef}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.45, 0.45, 0.08, 32]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshPhysicalMaterial color="#3c2217" metalness={0.1} roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 0, 0.05]} castShadow>
+          <torusGeometry args={[0.3, 0.02, 16, 100]} />
+          <meshStandardMaterial color={color} metalness={0.9} roughness={0.1} />
+        </mesh>
+        <mesh position={[0, 0, 0.06]}>
+          <octahedronGeometry args={[0.1]} />
+          <meshStandardMaterial color={color} metalness={1} roughness={0.2} />
+        </mesh>
+      </group>
+    );
+  }
+
+  return (
+    <mesh ref={meshRef} castShadow>
+      <dodecahedronGeometry args={[0.42]} />
+      <meshPhysicalMaterial color="#0c2f1f" metalness={0.9} roughness={0.1} clearcoat={1} />
+    </mesh>
+  );
+}
+
+function Exhibit3DCanvas({ artifactType, color = "#10b981", modelScale = 1.0 }) {
+  return (
+    <div className="w-full h-full relative font-sans" style={{ minHeight: '180px' }}>
+      <Canvas
+        camera={{ position: [0, 0, 3.0], fov: 40 }}
+        gl={{ antialias: true, alpha: true }}
+        shadows
+      >
+        <ambientLight intensity={1.2} />
+        <spotLight position={[4, 4, 4]} intensity={2.5} angle={0.4} penumbra={1} castShadow color={color} />
+        <pointLight position={[-4, -4, -2]} intensity={0.5} color="#ffffff" />
+        
+        <PresentationControls
+          global
+          zoom={0.9}
+          polar={[-0.2, 0.4]}
+          azimuth={[-Infinity, Infinity]}
+          config={{ mass: 1, tension: 200 }}
+        >
+          <Center>
+            {artifactType === 'classic' ? (
+              <Suspense fallback={
+                <mesh castShadow>
+                  <sphereGeometry args={[0.36, 32, 32]} />
+                  <meshStandardMaterial color={color} roughness={0.2} metalness={0.9} />
+                </mesh>
+              }>
+                <MayanArtifact scale={modelScale} position={[0, -0.15, 0]} />
+              </Suspense>
+            ) : (
+              <ProceduralRelic type={artifactType} color={color} />
+            )}
+          </Center>
+        </PresentationControls>
+        
+        <VFXParticles count={70} color={color} />
+      </Canvas>
+    </div>
+  );
+}
 
 // --- HIEROGLYPHS DATABASE ---
 const LETTER_TO_GLYPH = {
@@ -967,9 +1156,9 @@ export default function MayanCollection() {
                     }}
                   >
                     
-                    {/* Chamber Description Header */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-white/5 pb-6 gap-6 w-full">
-                      <div className="flex flex-col gap-2 max-w-2xl">
+                    {/* Chamber Description Header & 3D Interactive Relic */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-b border-white/5 pb-8 w-full">
+                      <div className="flex flex-col gap-2 lg:col-span-7">
                         <div className="flex items-center gap-3">
                           <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full font-mono text-[9px] uppercase tracking-wider text-[#10b981] font-bold">
                             Leaf {leaves.find(l => l.id === activeLeaf).num} • {leaves.find(l => l.id === activeLeaf).date}
@@ -981,15 +1170,27 @@ export default function MayanCollection() {
                         <p className="text-gray-400 text-xs md:text-sm font-light leading-relaxed font-sans mt-2">
                           {currentTheme.desc}
                         </p>
+                        <div className="mt-4 flex gap-3">
+                          <button 
+                            onClick={() => setActiveExhibit(activeLeaf)}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-black/60 hover:bg-[#10b981]/15 border border-[#10b981]/30 hover:border-[#10b981]/50 rounded-xl text-[10px] font-mono tracking-widest text-[#10b981] uppercase cursor-pointer transition-all shadow-md w-fit"
+                          >
+                            <Eye size={12} /> Play Codex Media
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Video/Media button overlay */}
-                      <button 
-                        onClick={() => setActiveExhibit(activeLeaf)}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-black/60 hover:bg-[#10b981]/15 border border-[#10b981]/30 hover:border-[#10b981]/50 rounded-xl text-[10px] font-mono tracking-widest text-[#10b981] uppercase cursor-pointer transition-all shadow-md shrink-0"
-                      >
-                        <Eye size={12} /> Play Codex Media
-                      </button>
+                      {/* 3D Exhibit Canvas */}
+                      <div className="lg:col-span-5 h-44 md:h-52 w-full overflow-hidden rounded-2xl border border-[#10b981]/25 hover:border-[#10b981]/80 relative shadow-[0_10px_30px_rgba(0,0,0,0.8)] group cursor-pointer bg-black/40 backdrop-blur-sm transition-all duration-300">
+                        <Exhibit3DCanvas artifactType={activeLeaf} color="#10b981" modelScale={1.3} />
+                        <div className="absolute bottom-4 left-4 font-mono text-[9px] uppercase tracking-widest text-[#10b981] bg-black/75 px-3 py-1 rounded border border-[#10b981]/25 pointer-events-none">
+                          Interactive 3D Codex Relic
+                        </div>
+                        <div className="absolute top-4 right-4 font-mono text-[8px] uppercase tracking-widest text-gray-500 pointer-events-none">
+                          Drag to Rotate
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                      </div>
                     </div>
 
                     {/* Scriptorium or Artifact Cards display */}
